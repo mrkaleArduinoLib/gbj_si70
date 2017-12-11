@@ -1,0 +1,12 @@
+{
+  "name": "gbj_si70",
+  "keywords": "twowire, 2-wire, i2c, iic, bus, sensor, temperature, humidity",
+  "description": "Library for the humidity and temperature sensors SI70xx, especially SI7021 on board GY-21 communicating on two-wire (I2C) bus.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrkaleArduinoLib/gbj_si70.git"
+  },
+  "version": "1.0.0",
+  "frameworks": "arduino",
+  "platforms": ["atmelavr", "atmelsam", "espressif8266", "espressif32"]
+}

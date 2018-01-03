@@ -26,8 +26,7 @@ void errorHandler()
 {
   if (Sensor.isSuccess()) return;
   Serial.print("Error: ");
-  Serial.print(Sensor.getLastResult());
-  Serial.println(")");
+  Serial.println(Sensor.getLastResult());
 }
 
 

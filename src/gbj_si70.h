@@ -35,6 +35,7 @@
 #elif defined(PARTICLE)
   #include <Particle.h>
 #endif
+
 #include "gbj_twowire.h"
 
 #define GBJ_SI70_ADDRESS              0x40  // Hardware address
@@ -83,16 +84,14 @@
 #define GBJ_SI70_RES_T11_RH11         11
 
 // Error codes
-// #define GBJ_SI70_ERROR                255   // General error
-#define GBJ_SI70_ERR_ADDRESS          254   // Bad address
-#define GBJ_SI70_ERR_RESET            253   // Sensor reset failure
-#define GBJ_SI70_ERR_FIRMWARE         252   // Firmware revision reading failure
-#define GBJ_SI70_ERR_SERIAL_A         251   // Serial number upper double word reading failure
-#define GBJ_SI70_ERR_SERIAL_B         250   // Serial number upper double word reading failure
-#define GBJ_SI70_ERR_REG_RHT_READ     249   // Reading RH/T User Register 1 failure
-#define GBJ_SI70_ERR_REG_HEATER_READ  248   // Reading Heater Control Register failure
-#define GBJ_SI70_ERR_MEASURE_RHUM     247   // Measuring relative humidity failure
-#define GBJ_SI70_ERR_MEASURE_TEMP     246   // Measuring temperature failure
+#define GBJ_SI70_ERR_RESET            255   // Sensor reset failure
+#define GBJ_SI70_ERR_FIRMWARE         254   // Firmware revision reading failure
+#define GBJ_SI70_ERR_SERIAL_A         253   // Serial number upper double word reading failure
+#define GBJ_SI70_ERR_SERIAL_B         252   // Serial number upper double word reading failure
+#define GBJ_SI70_ERR_REG_RHT_READ     251   // Reading RH/T User Register 1 failure
+#define GBJ_SI70_ERR_REG_HEATER_READ  250   // Reading Heater Control Register failure
+#define GBJ_SI70_ERR_MEASURE_RHUM     249   // Measuring relative humidity failure
+#define GBJ_SI70_ERR_MEASURE_TEMP     248   // Measuring temperature failure
 
 
 class gbj_si70 : public gbj_twowire
@@ -101,6 +100,7 @@ public:
 //------------------------------------------------------------------------------
 // Public methods
 //------------------------------------------------------------------------------
+
 
 /*
   Initialize two wire bus and sensor with parameters stored by constructor.

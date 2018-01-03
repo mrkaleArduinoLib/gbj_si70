@@ -4,8 +4,8 @@
 uint8_t gbj_si70::begin(bool busStop)
 {
   initLastResult();
-  if(setAddress(GBJ_SI70_ADDRESS)) return getLastResult();
   setBusStop(busStop);
+  if (setAddress(GBJ_SI70_ADDRESS)) return getLastResult();
   if (reset()) return getLastResult();
   if (readFwRevision()) return getLastResult();
   if (readSerialNumber()) return getLastResult();
@@ -16,25 +16,25 @@ uint8_t gbj_si70::begin(bool busStop)
 uint8_t gbj_si70::reset()
 {
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) GBJ_SI70_RESET);
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeByte(GBJ_SI70_RESET);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   wait(50);  // Wait for resetting
 
   // Send command to read control user register 1
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) GBJ_SI70_REG_RHT_READ);
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeByte(GBJ_SI70_REG_RHT_READ);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
 
   // Read control user register's reset settings value
   uint8_t resetSetting;
   uint8_t byteCount = 1;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
-    resetSetting = Wire.read();
+    resetSetting = read();
   }
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
 
   // Validate reset settings
   if (resetSetting != GBJ_SI70_RST_REG_USER) return setLastResult(GBJ_SI70_ERR_RESET);
@@ -45,27 +45,26 @@ uint8_t gbj_si70::reset()
 uint8_t gbj_si70::writeLockByte()
 {
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) (GBJ_SI70_LOCK_BYTE_WRITE >> 8));
-  Wire.write((uint8_t) (GBJ_SI70_LOCK_BYTE_WRITE & 0x00FF));
-  Wire.write((uint8_t) GBJ_SI70_LOCK_BYTE_VALUE);
-  return setLastResult(Wire.endTransmission(getBusStop()));
+  beginTransmission(getAddress());
+  writeInt(GBJ_SI70_LOCK_BYTE_WRITE);
+  writeByte(GBJ_SI70_LOCK_BYTE_VALUE);
+  return setLastResult(endTransmission(getBusStop()));
 }
 
 
 float gbj_si70::measureHumidity(bool holdMasterMode)
 {
   initBus();
-  Wire.beginTransmission(getAddress());
+  beginTransmission(getAddress());
   if (holdMasterMode)
   {
-    Wire.write((uint8_t) GBJ_SI70_MEASURE_RH_HOLD);
+    writeByte(GBJ_SI70_MEASURE_RH_HOLD);
   }
   else
   {
-    Wire.write((uint8_t) GBJ_SI70_MEASURE_RH_NOHOLD);
+    writeByte(GBJ_SI70_MEASURE_RH_NOHOLD);
   }
-  if (setLastResult(Wire.endTransmission(getBusStop())))
+  if (setLastResult(endTransmission(getBusStop())))
   {
     return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
   }
@@ -73,13 +72,13 @@ float gbj_si70::measureHumidity(bool holdMasterMode)
   wait(GBJ_SI70_CONVERSION_TIME);
   uint16_t wordMeasure;
   uint8_t byteCount = 3;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
-    wordMeasure = Wire.read();   // Read MSB
+    wordMeasure = read();   // Read MSB
     wordMeasure <<= 8;
-    wordMeasure |= Wire.read();  // Read LSB
-    if (!checkCrc8((uint32_t) wordMeasure, Wire.read()))  // Read checksum
+    wordMeasure |= read();  // Read LSB
+    if (!checkCrc8((uint32_t) wordMeasure, read()))  // Read checksum
     {
       return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
     }
@@ -88,7 +87,7 @@ float gbj_si70::measureHumidity(bool holdMasterMode)
   {
     return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
   }
-  if (setLastResult(Wire.endTransmission(getBusStop())))
+  if (setLastResult(endTransmission(getBusStop())))
   {
     return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
   }
@@ -304,22 +303,21 @@ uint8_t gbj_si70::readFwRevision()
 {
   initBus();
   // Ask for revision by two commands
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) (GBJ_SI70_READ_FW_REVISION >> 8));
-  Wire.write((uint8_t) (GBJ_SI70_READ_FW_REVISION & 0x00FF));
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeInt(GBJ_SI70_READ_FW_REVISION);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   // Read revision byte
   uint8_t byteCount = 1;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
-    _fwRevision = Wire.read();
+    _fwRevision = read();
   }
   else
   {
     return setLastResult(GBJ_SI70_ERR_FIRMWARE);
   }
-  return setLastResult(Wire.endTransmission(getBusStop()));
+  return setLastResult(endTransmission(getBusStop()));
 }
 
 
@@ -327,21 +325,20 @@ uint8_t gbj_si70::readSerialNumber()
 {
   // Ask for SNA bytes by two commands
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) (GBJ_SI70_READ_SNA >> 8));
-  Wire.write((uint8_t) (GBJ_SI70_READ_SNA & 0x00FF));
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeInt(GBJ_SI70_READ_SNA);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   // Read and validate SNA - 4 upper bytes of serial number
   uint8_t byteCount = 8;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
       _serialSNA = 0x00000000;
       for (uint8_t i = 0; i < byteCount / 2; i++) // From SNA_3 to SNA_0
       {
         _serialSNA <<= 8;
-        _serialSNA |= Wire.read();
-        if (!checkCrc8(_serialSNA, Wire.read()))
+        _serialSNA |= read();
+        if (!checkCrc8(_serialSNA, read()))
         {
           return setLastResult(GBJ_SI70_ERR_SERIAL_A);
         }
@@ -351,26 +348,25 @@ uint8_t gbj_si70::readSerialNumber()
   {
     return setLastResult(GBJ_SI70_ERR_SERIAL_A);
   }
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   // Ask for SNB bytes by two commands
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) (GBJ_SI70_READ_SNB >> 8));
-  Wire.write((uint8_t) (GBJ_SI70_READ_SNB & 0x00FF));
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeInt(GBJ_SI70_READ_SNB);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   // Read and validate SNB - 4 lower bytes of serial number
   byteCount = 6;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
       _serialSNB = 0x00000000;
       for (uint8_t i = 0; i < byteCount / 3; i++) // From SNB_3 to SNB_0
       {
         _serialSNB <<= 8;
-        _serialSNB |= Wire.read();
+        _serialSNB |= read();
         _serialSNB <<= 8;
-        _serialSNB |= Wire.read();
-        if (!checkCrc8(_serialSNB, Wire.read()))
+        _serialSNB |= read();
+        if (!checkCrc8(_serialSNB, read()))
         {
           return setLastResult(GBJ_SI70_ERR_SERIAL_B);
         }
@@ -380,7 +376,7 @@ uint8_t gbj_si70::readSerialNumber()
   {
     return setLastResult(GBJ_SI70_ERR_SERIAL_B);
   }
-  return setLastResult(Wire.endTransmission(getBusStop()));
+  return setLastResult(endTransmission(getBusStop()));
 }
 
 
@@ -388,21 +384,21 @@ uint8_t gbj_si70::readUserRegister()
 {
   initBus();
   // Ask for reading the User Register 1
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) GBJ_SI70_REG_RHT_READ);
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeByte(GBJ_SI70_REG_RHT_READ);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   // Read user register
   uint8_t byteCount = 1;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
-    _userRegister = Wire.read();
+    _userRegister = read();
   }
   else
   {
     return setLastResult(GBJ_SI70_ERR_REG_RHT_READ);
   }
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   _userRegEnabled = true;
   return getLastResult();
 }
@@ -411,10 +407,10 @@ uint8_t gbj_si70::readUserRegister()
 uint8_t gbj_si70::writeUserRegister()
 {
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) GBJ_SI70_REG_RHT_WRITE);
-  Wire.write(_userRegister);
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeByte(GBJ_SI70_REG_RHT_WRITE);
+  writeByte(_userRegister);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   _userRegEnabled = false;  // Reread the user register the next time for sure
   return getLastResult();
 }
@@ -424,21 +420,21 @@ uint8_t gbj_si70::readHeaterRegister()
 {
   // Ask for reading the Heater Control Register
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) GBJ_SI70_REG_HEATER_READ);
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  beginTransmission(getAddress());
+  writeByte(GBJ_SI70_REG_HEATER_READ);
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   // Read heater register
   uint8_t byteCount = 1;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
-    _heaterRegister = Wire.read();
+    _heaterRegister = read();
   }
   else
   {
     return setLastResult(GBJ_SI70_ERR_REG_HEATER_READ);
   }
-  if (setLastResult(Wire.endTransmission(getBusStop()))) return getLastResult();
+  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
   _heaterRegEnabled = true;
   return getLastResult();
 }
@@ -447,11 +443,11 @@ uint8_t gbj_si70::readHeaterRegister()
 uint8_t gbj_si70::writeHeaterRegister()
 {
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write((uint8_t) GBJ_SI70_REG_HEATER_WRITE);
-  Wire.write(_heaterRegister);
+  beginTransmission(getAddress());
+  writeByte(GBJ_SI70_REG_HEATER_WRITE);
+  writeByte(_heaterRegister);
   _heaterRegEnabled = false;  // Reread the heater register the next time for sure
-  return setLastResult(Wire.endTransmission(getBusStop()));
+  return setLastResult(endTransmission(getBusStop()));
 }
 
 
@@ -516,9 +512,9 @@ uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
 float gbj_si70::readTemperature(uint8_t command)
 {
   initBus();
-  Wire.beginTransmission(getAddress());
-  Wire.write(command);
-  if (setLastResult(Wire.endTransmission(getBusStop())))
+  beginTransmission(getAddress());
+  writeByte(command);
+  if (setLastResult(endTransmission(getBusStop())))
   {
     return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
   }
@@ -526,14 +522,14 @@ float gbj_si70::readTemperature(uint8_t command)
   wait(GBJ_SI70_CONVERSION_TIME);
   uint16_t wordMeasure;
   uint8_t byteCount = 3;
-  if (Wire.requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && Wire.available() >= byteCount)
+  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
+  && available() >= byteCount)
   {
-    wordMeasure = Wire.read();   // Read MSB
+    wordMeasure = read();   // Read MSB
     wordMeasure <<= 8;
-    wordMeasure |= Wire.read();  // Read LSB
+    wordMeasure |= read();  // Read LSB
     if (command != GBJ_SI70_READ_TEMP_FROM_RH \
-    && !checkCrc8((uint32_t) wordMeasure, Wire.read()))  // Read checksum
+    && !checkCrc8((uint32_t) wordMeasure, read()))  // Read checksum
     {
       return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
     }
@@ -542,7 +538,7 @@ float gbj_si70::readTemperature(uint8_t command)
   {
     return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
   }
-  if (setLastResult(Wire.endTransmission(getBusStop())))
+  if (setLastResult(endTransmission(getBusStop())))
   {
     return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
   }

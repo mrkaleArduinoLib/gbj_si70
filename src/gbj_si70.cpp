@@ -3,7 +3,6 @@
 
 uint8_t gbj_si70::begin(bool busStop)
 {
-  initLastResult();
   setBusStop(busStop);
   if (setAddress(GBJ_SI70_ADDRESS)) return getLastResult();
   if (reset()) return getLastResult();
@@ -15,82 +14,42 @@ uint8_t gbj_si70::begin(bool busStop)
 
 uint8_t gbj_si70::reset()
 {
-  initBus();
-  beginTransmission(getAddress());
-  writeByte(GBJ_SI70_RESET);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
+  if (busSend(GBJ_SI70_RESET)) return getLastResult();
   wait(50);  // Wait for resetting
 
   // Send command to read control user register 1
-  beginTransmission(getAddress());
-  writeByte(GBJ_SI70_REG_RHT_READ);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
+  if (busSend(GBJ_SI70_REG_RHT_READ)) return getLastResult();
 
   // Read control user register's reset settings value
-  uint8_t resetSetting;
-  uint8_t byteCount = 1;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
-  {
-    resetSetting = read();
-  }
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
+  uint8_t data[1];
+  if (busReceive(data, sizeof(data)/sizeof(data[0])))  return getLastResult();
 
   // Validate reset settings
-  if (resetSetting != GBJ_SI70_RST_REG_USER) return setLastResult(GBJ_SI70_ERR_RESET);
+  if (data[0] != GBJ_SI70_RST_REG_USER) return setLastResult(GBJ_SI70_ERR_RESET);
   return getLastResult();
 }
 
 
 uint8_t gbj_si70::writeLockByte()
 {
-  initBus();
-  beginTransmission(getAddress());
-  writeInt(GBJ_SI70_LOCK_BYTE_WRITE);
-  writeByte(GBJ_SI70_LOCK_BYTE_VALUE);
-  return setLastResult(endTransmission(getBusStop()));
+  if (busSend(GBJ_SI70_LOCK_BYTE_WRITE)) return getLastResult();
+  if (busSend(GBJ_SI70_LOCK_BYTE_VALUE)) return getLastResult();
+  return getLastResult();
 }
 
 
 float gbj_si70::measureHumidity(bool holdMasterMode)
 {
-  initBus();
-  beginTransmission(getAddress());
-  if (holdMasterMode)
-  {
-    writeByte(GBJ_SI70_MEASURE_RH_HOLD);
-  }
-  else
-  {
-    writeByte(GBJ_SI70_MEASURE_RH_NOHOLD);
-  }
-  if (setLastResult(endTransmission(getBusStop())))
-  {
-    return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
-  }
+  if (holdMasterMode && busSend(GBJ_SI70_MEASURE_RH_HOLD)) return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
+  if (!holdMasterMode && busSend(GBJ_SI70_MEASURE_RH_NOHOLD)) return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
   // Read measuring and checksum bytes
   wait(GBJ_SI70_CONVERSION_TIME);
+  uint8_t data[3];
+  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
   uint16_t wordMeasure;
-  uint8_t byteCount = 3;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
-  {
-    wordMeasure = read();   // Read MSB
-    wordMeasure <<= 8;
-    wordMeasure |= read();  // Read LSB
-    if (!checkCrc8((uint32_t) wordMeasure, read()))  // Read checksum
-    {
-      return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
-    }
-  }
-  else
-  {
-    return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
-  }
-  if (setLastResult(endTransmission(getBusStop())))
-  {
-    return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
-  }
+  wordMeasure = data[0] << 8;   // MSB
+  wordMeasure |= data[1];       // LSB
+  if (!checkCrc8((uint32_t) wordMeasure, data[2])) return setLastResult(GBJ_SI70_ERR_MEASURE_RHUM);
   // Convert measured humidity to percentage of relative humidity
   return calculateHumidity(wordMeasure);
 }
@@ -98,9 +57,9 @@ float gbj_si70::measureHumidity(bool holdMasterMode)
 
 float gbj_si70::measureHumidity(float *temperature, bool holdMasterMode)
 {
-    float humidity = measureHumidity(holdMasterMode);
-    *temperature = readTemperature(GBJ_SI70_READ_TEMP_FROM_RH); // Retrieve temperature
-    return humidity;
+  float humidity = measureHumidity(holdMasterMode);
+  *temperature = readTemperature(GBJ_SI70_READ_TEMP_FROM_RH);
+  return humidity;
 }
 
 
@@ -301,104 +260,64 @@ uint8_t  gbj_si70::resolution()
 
 uint8_t gbj_si70::readFwRevision()
 {
-  initBus();
-  // Ask for revision by two commands
-  beginTransmission(getAddress());
-  writeInt(GBJ_SI70_READ_FW_REVISION);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
-  // Read revision byte
-  uint8_t byteCount = 1;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
-  {
-    _fwRevision = read();
-  }
-  else
-  {
-    return setLastResult(GBJ_SI70_ERR_FIRMWARE);
-  }
-  return setLastResult(endTransmission(getBusStop()));
+  if (busSend(GBJ_SI70_READ_FW_REVISION)) return setLastResult(GBJ_SI70_ERR_FIRMWARE);
+  uint8_t data[1];
+  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(GBJ_SI70_ERR_FIRMWARE);
+  _fwRevision = data[0];
+  return getLastResult();
 }
 
 
 uint8_t gbj_si70::readSerialNumber()
 {
-  // Ask for SNA bytes by two commands
-  initBus();
-  beginTransmission(getAddress());
-  writeInt(GBJ_SI70_READ_SNA);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
-  // Read and validate SNA - 4 upper bytes of serial number
-  uint8_t byteCount = 8;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
+  // Ask for SNA bytes
   {
-      _serialSNA = 0x00000000;
-      for (uint8_t i = 0; i < byteCount / 2; i++) // From SNA_3 to SNA_0
-      {
-        _serialSNA <<= 8;
-        _serialSNA |= read();
-        if (!checkCrc8(_serialSNA, read()))
-        {
-          return setLastResult(GBJ_SI70_ERR_SERIAL_A);
-        }
-      }
+    uint8_t data[8];
+    if (busSend(GBJ_SI70_READ_SNA)) return setLastResult(GBJ_SI70_ERR_SERIAL_A);
+    // Read and validate SNA - 4 upper bytes of serial number
+    if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(GBJ_SI70_ERR_SERIAL_A);
+    _serialSNA = 0x00000000;
+    /* From SNA_3 to SNA_0
+      After each SNA byte the CRC byte follows, i.e., there are 4 pairs of
+      SNA-CRC bytes.
+    */
+    for (uint8_t i = 0; i < (sizeof(data) / sizeof(data[0]) / 2); i++)
+    {
+      _serialSNA <<= 8;
+      _serialSNA |= data[2*i];
+      if (!checkCrc8(_serialSNA, data[2*i + 1])) return setLastResult(GBJ_SI70_ERR_SERIAL_A);
+    }
   }
-  else
+  // Ask for SNB bytes
   {
-    return setLastResult(GBJ_SI70_ERR_SERIAL_A);
+    if (busSend(GBJ_SI70_READ_SNB)) return setLastResult(GBJ_SI70_ERR_SERIAL_B);
+    // Read and validate SNB - 4 lower bytes of serial number
+    uint8_t data[6];
+    if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(GBJ_SI70_ERR_SERIAL_B);
+    _serialSNB = 0x00000000;
+    /* From SNB_3 to SNB_0
+      After each pair of SNA bytes the CRC byte follows, i.e., there are 2 tripples
+      of SNB-SNB-CRC bytes.
+    */
+    for (uint8_t i = 0; i < (sizeof(data) / sizeof(data[0]) / 3); i++)
+    {
+      _serialSNB <<= 8;
+      _serialSNB |= data[3*i];
+      _serialSNB <<= 8;
+      _serialSNB |= data[3*i + 1];
+      if (!checkCrc8(_serialSNB, data[3*i + 2])) return setLastResult(GBJ_SI70_ERR_SERIAL_B);
+    }
   }
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
-  // Ask for SNB bytes by two commands
-  initBus();
-  beginTransmission(getAddress());
-  writeInt(GBJ_SI70_READ_SNB);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
-  // Read and validate SNB - 4 lower bytes of serial number
-  byteCount = 6;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
-  {
-      _serialSNB = 0x00000000;
-      for (uint8_t i = 0; i < byteCount / 3; i++) // From SNB_3 to SNB_0
-      {
-        _serialSNB <<= 8;
-        _serialSNB |= read();
-        _serialSNB <<= 8;
-        _serialSNB |= read();
-        if (!checkCrc8(_serialSNB, read()))
-        {
-          return setLastResult(GBJ_SI70_ERR_SERIAL_B);
-        }
-      }
-  }
-  else
-  {
-    return setLastResult(GBJ_SI70_ERR_SERIAL_B);
-  }
-  return setLastResult(endTransmission(getBusStop()));
+  return getLastResult();
 }
 
 
 uint8_t gbj_si70::readUserRegister()
 {
-  initBus();
-  // Ask for reading the User Register 1
-  beginTransmission(getAddress());
-  writeByte(GBJ_SI70_REG_RHT_READ);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
-  // Read user register
-  uint8_t byteCount = 1;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
-  {
-    _userRegister = read();
-  }
-  else
-  {
-    return setLastResult(GBJ_SI70_ERR_REG_RHT_READ);
-  }
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
+  if (busSend(GBJ_SI70_REG_RHT_READ)) return setLastResult(GBJ_SI70_ERR_REG_RHT_READ);
+  uint8_t data[1];
+  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(GBJ_SI70_ERR_REG_RHT_READ);
+  _userRegister = data[0];
   _userRegEnabled = true;
   return getLastResult();
 }
@@ -406,11 +325,7 @@ uint8_t gbj_si70::readUserRegister()
 
 uint8_t gbj_si70::writeUserRegister()
 {
-  initBus();
-  beginTransmission(getAddress());
-  writeByte(GBJ_SI70_REG_RHT_WRITE);
-  writeByte(_userRegister);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
+  if (busSend(GBJ_SI70_REG_RHT_WRITE, _userRegister)) return getLastResult();
   _userRegEnabled = false;  // Reread the user register the next time for sure
   return getLastResult();
 }
@@ -418,23 +333,10 @@ uint8_t gbj_si70::writeUserRegister()
 
 uint8_t gbj_si70::readHeaterRegister()
 {
-  // Ask for reading the Heater Control Register
-  initBus();
-  beginTransmission(getAddress());
-  writeByte(GBJ_SI70_REG_HEATER_READ);
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
-  // Read heater register
-  uint8_t byteCount = 1;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
-  {
-    _heaterRegister = read();
-  }
-  else
-  {
-    return setLastResult(GBJ_SI70_ERR_REG_HEATER_READ);
-  }
-  if (setLastResult(endTransmission(getBusStop()))) return getLastResult();
+  if (busSend(GBJ_SI70_REG_HEATER_READ)) return setLastResult(GBJ_SI70_ERR_REG_HEATER_READ);
+  uint8_t data[1];
+  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(GBJ_SI70_ERR_REG_HEATER_READ);
+  _heaterRegister = data[0];
   _heaterRegEnabled = true;
   return getLastResult();
 }
@@ -442,12 +344,9 @@ uint8_t gbj_si70::readHeaterRegister()
 
 uint8_t gbj_si70::writeHeaterRegister()
 {
-  initBus();
-  beginTransmission(getAddress());
-  writeByte(GBJ_SI70_REG_HEATER_WRITE);
-  writeByte(_heaterRegister);
+  if (busSend(GBJ_SI70_REG_HEATER_WRITE, _heaterRegister)) return getLastResult();
   _heaterRegEnabled = false;  // Reread the heater register the next time for sure
-  return setLastResult(endTransmission(getBusStop()));
+  return getLastResult();
 }
 
 
@@ -511,37 +410,15 @@ uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
 
 float gbj_si70::readTemperature(uint8_t command)
 {
-  initBus();
-  beginTransmission(getAddress());
-  writeByte(command);
-  if (setLastResult(endTransmission(getBusStop())))
-  {
-    return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
-  }
-  // Read measuring and checksum bytes
+  if (busSend(command)) return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
   wait(GBJ_SI70_CONVERSION_TIME);
+  uint8_t data[3];
+  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
   uint16_t wordMeasure;
-  uint8_t byteCount = 3;
-  if (requestFrom(getAddress(), byteCount, (uint8_t) getBusStop()) > 0 \
-  && available() >= byteCount)
-  {
-    wordMeasure = read();   // Read MSB
-    wordMeasure <<= 8;
-    wordMeasure |= read();  // Read LSB
-    if (command != GBJ_SI70_READ_TEMP_FROM_RH \
-    && !checkCrc8((uint32_t) wordMeasure, read()))  // Read checksum
-    {
-      return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
-    }
-  }
-  else
-  {
-    return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
-  }
-  if (setLastResult(endTransmission(getBusStop())))
-  {
-    return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
-  }
+  wordMeasure = data[0] << 8;   // MSB
+  wordMeasure |= data[1];       // LSB
+  if (command != GBJ_SI70_READ_TEMP_FROM_RH \
+  && !checkCrc8((uint32_t) wordMeasure, data[2])) return setLastResult(GBJ_SI70_ERR_MEASURE_TEMP);
   // Convert measured temperature to centigrade
   return calculateTemperature(wordMeasure);
 }

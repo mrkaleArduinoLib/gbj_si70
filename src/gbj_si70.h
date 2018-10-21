@@ -22,103 +22,81 @@
  */
 #ifndef GBJ_SI70_H
 #define GBJ_SI70_H
-#define GBJ_SI70_VERSION "GBJ_SI70 1.0.0"
-
-#if defined(__AVR__)
-  #if ARDUINO >= 100
-    #include <Arduino.h>
-  #else
-    #include <WProgram.h>
-  #endif
-  #include <inttypes.h>
-  #include <Wire.h>
-#elif defined(PARTICLE)
-  #include <Particle.h>
-#endif
 
 #include "gbj_twowire.h"
-
-#define GBJ_SI70_ADDRESS              0x40  // Hardware address
-#define GBJ_SI70_CONVERSION_TIME      25    // Time delay needed for measurement conversion in milliseconds
-
-// Commands
-#define GBJ_SI70_MEASURE_RH_HOLD      0xE5    // Measure Relative Humidity, Hold Master Mode
-#define GBJ_SI70_MEASURE_RH_NOHOLD    0xF5    // Measure Relative Humidity, No Hold Master Mode
-#define GBJ_SI70_MEASURE_TEMP_HOLD    0xE3    // Measure Temperature, Hold Master Mode
-#define GBJ_SI70_MEASURE_TEMP_NOHOLD  0xF3    // Measure Temperature, No Hold Master Mode
-#define GBJ_SI70_READ_TEMP_FROM_RH    0xE0    // Read Temperature Value from Previous RH Measurement
-#define GBJ_SI70_RESET                0xFE    // Reset
-#define GBJ_SI70_REG_RHT_WRITE        0xE6    // Write RH/T User Register 1
-#define GBJ_SI70_REG_RHT_READ         0xE7    // Read RH/T User Register 1
-#define GBJ_SI70_REG_HEATER_WRITE     0x51    // Write Heater Control Register
-#define GBJ_SI70_REG_HEATER_READ      0x11    // Read Heater Control Register
-#define GBJ_SI70_READ_SNA             0xFA0F  // Read Electronic ID 1st Byte
-#define GBJ_SI70_READ_SNB             0xFCC9  // Read Electronic ID 2nd Byte
-#define GBJ_SI70_READ_FW_REVISION     0x84B8  // Read Firmware Revision
-#define GBJ_SI70_LOCK_BYTE_WRITE      0xC556
-#define GBJ_SI70_LOCK_BYTE_VALUE      0x00
-
-// Control registers reset settings
-#define GBJ_SI70_RST_REG_USER         0x3A    // Reset Settings = 0011_1010 (datasheet Register 1. User Register 1)
-#define GBJ_SI70_RST_REG_HEATER       0x00    // Reset Settings = 0000_0000 (datasheet Register 2. Heater Control Register)
-
-// Firmware revision
-#define GBJ_SI70_FW_VERSION_10        0xFF    // Firmware version 1.0, A-10 w/o heater control register
-#define GBJ_SI70_FW_VERSION_20        0x20    // Firmware version 2.0, A-20 with heater control register
-
-// Silicon Labs device types and revisions
-#define GBJ_SI70_TYPE_SAMPLE1         0x00    // Engineering samples
-#define GBJ_SI70_TYPE_SAMPLE2         0xFF    // Engineering samples
-#define GBJ_SI70_TYPE_7013            0x0D    // Si7013
-#define GBJ_SI70_TYPE_7020            0x14    // Si7020
-#define GBJ_SI70_TYPE_7021            0x15    // SI70
-
-// Heater current limits in milliampers
-#define GBJ_SI70_HEATER_CURRENT_MIN   3.09  // Minimal limit at heater level B0000
-#define GBJ_SI70_HEATER_CURRENT_MAX  94.20  // Maximal limit at heater level B1111
-
-// Measurement resolution in bits
-#define GBJ_SI70_RES_T14_RH12         14
-#define GBJ_SI70_RES_T13_RH10         13
-#define GBJ_SI70_RES_T12_RH8          12
-#define GBJ_SI70_RES_T11_RH11         11
-
-// Error codes
-#define GBJ_SI70_ERR_RESET            255   // Sensor reset failure
-#define GBJ_SI70_ERR_FIRMWARE         254   // Firmware revision reading failure
-#define GBJ_SI70_ERR_SERIAL_A         253   // Serial number upper double word reading failure
-#define GBJ_SI70_ERR_SERIAL_B         252   // Serial number upper double word reading failure
-#define GBJ_SI70_ERR_REG_RHT_READ     251   // Reading RH/T User Register 1 failure
-#define GBJ_SI70_ERR_REG_HEATER_READ  250   // Reading Heater Control Register failure
-#define GBJ_SI70_ERR_MEASURE_RHUM     249   // Measuring relative humidity failure
-#define GBJ_SI70_ERR_MEASURE_TEMP     248   // Measuring temperature failure
 
 
 class gbj_si70 : public gbj_twowire
 {
 public:
 //------------------------------------------------------------------------------
+// Public constants
+//------------------------------------------------------------------------------
+static const String VERSION;
+enum Addresses
+{
+  ADDRESS = 0x40,  // Hardware address
+};
+enum ErrorCodes
+{
+  ERROR_RESET = 255,  // Sensor reset failure
+  ERROR_FIRMWARE = 254,  // Firmware revision reading failure
+  ERROR_SERIAL_A = 253,  // Serial number upper double word reading failure
+  ERROR_SERIAL_B = 252,  // Serial number upper double word reading failure
+  ERROR_REG_RHT_READ = 251,  // Reading RH/T User Register 1 failure
+  ERROR_REG_HEATER_READ = 250,  // Reading Heater Control Register failure
+  ERROR_MEASURE_RHUM = 249,  // Measuring relative humidity failure
+  ERROR_MEASURE_TEMP = 248,  // Measuring temperature failure
+};
+enum DeviceTypes
+{
+  TYPE_SAMPLE1 = 0x00,  // Engineering samples
+  TYPE_SAMPLE2 = 0xFF,  // Engineering samples
+  TYPE_7013 = 0x0D,  // Si7013
+  TYPE_7020 = 0x14,  // Si7020
+  TYPE_7021 = 0x15,  // SI70
+};
+enum Resolutions  // In bits
+{
+  RESOLUTION_T14_RH12 = 14,
+  RESOLUTION_T13_RH10 = 13,
+  RESOLUTION_T12_RH8 = 12,
+  RESOLUTION_T11_RH11 = 11,
+};
+enum FirmwareVersion
+{
+  FW_VERSION_10 = 0xFF,  // Firmware version 1.0, A-10 w/o heater control register
+  FW_VERSION_20 = 0x20,  // Firmware version 2.0, A-20 with heater control register
+};
+
+
+//------------------------------------------------------------------------------
 // Public methods
 //------------------------------------------------------------------------------
+/*
+  Constructor taken from parent class.
+*/
+gbj_si70(uint32_t clockSpeed = CLOCK_100KHZ, bool busStop = true, \
+  uint8_t pinSDA = 4, uint8_t pinSCL = 5) \
+: gbj_twowire(clockSpeed, busStop, pinSDA, pinSCL) {};
 
 
 /*
-  Initialize two wire bus and sensor with parameters stored by constructor.
+  Initialize sensor with parameters specific for it
 
   DESCRIPTION:
   The method sanitizes and stores input parameters to the class instance object,
   which determines the operation modus of the sensor.
 
   PARAMETERS:
-  busStop - Flag about releasing the bus after end of data transmission.
-            - Data type: boolean
-            - Default value: true
-            - Limited range: true, false
-
+  holdMasterMode - Flag about active hold master mode at measuring.
+                   - Data type: boolean
+                   - Default value: false
+                   - Limited range: true, false
   RETURN:
   Result code.
 */
-  uint8_t begin(bool busStop = true);
+uint8_t begin(bool holdMasterMode = true);
 
 
 /*
@@ -133,7 +111,7 @@ public:
   RETURN:
   Result code.
 */
-  uint8_t reset();
+uint8_t reset();
 
 
 /*
@@ -148,7 +126,7 @@ public:
   RETURN:
   Result code.
 */
-  uint8_t writeLockByte();
+uint8_t writeLockByte();
 
 
 /*
@@ -158,15 +136,12 @@ public:
   The method measures relative humidity as well as temperature, but returns
   the humidity only. The temperature can be returned by another method.
 
-  PARAMETERS:
-  holdMasterMode  - Flag about active hold master mode at measuring.
-                    - Data type: boolean
-                    - Default value: false
-                    - Limited range: true, false
+  PARAMETERS: none
+
   RETURN:
-  Relative humidity in per cents or error code GBJ_SI70_ERR_MEASURE_RHUM.
+  Relative humidity in per cents or error code ERROR_MEASURE_RHUM.
 */
-  float measureHumidity(bool holdMasterMode = false);
+float measureHumidity();
 
 
 /*
@@ -181,48 +156,46 @@ public:
                 - Data type: integer
                 - Default value: none
                 - Limited range: system specific address space
-
-  holdMasterMode  - Flag about active hold master mode at measuring.
-                    - Data type: boolean
-                    - Default value: false
-                    - Limited range: true, false
   RETURN:
   Relative humidity in per cents and temperature in centigrades or error code
-  GBJ_SI70_ERR_MEASURE_RHUM.
+  ERROR_MEASURE_RHUM.
 */
-  float measureHumidity(float *temperature, bool holdMasterMode = false);
+float measureHumidity(float *temperature);
 
 
-  /*
-    Measure temperature.
+/*
+  Measure temperature.
 
-    DESCRIPTION:
-    The method measures temperature only.
+  DESCRIPTION:
+  The method measures temperature only.
 
-    PARAMETERS:
-    holdMasterMode  - Flag about active hold master mode at measuring.
-                      - Data type: boolean
-                      - Default value: false
-                      - Limited range: true, false
-    RETURN:
-    Temperature in centigrade or error code GBJ_SI70_ERR_MEASURE_TEMP.
-  */
-  float measureTemperature(bool holdMasterMode = false);
+  PARAMETERS: none
+
+  RETURN:
+  Temperature in centigrades or error code ERROR_MEASURE_TEMP.
+*/
+float measureTemperature();
 
 
 //------------------------------------------------------------------------------
 // Public setters - they usually return result code.
 //------------------------------------------------------------------------------
-  uint8_t setHeaterEnabled();     // Turn on sensor's heater
-  uint8_t setHeaterDisabled();    // Turn off sensor's heater
-  uint8_t setResolutionTemp14();  // Set temperature resolution to 14 bits
-  uint8_t setResolutionTemp13();  // Set temperature resolution to 13 bits
-  uint8_t setResolutionTemp12();  // Set temperature resolution to 12 bits
-  uint8_t setResolutionTemp11();  // Set temperature resolution to 11 bits
-  uint8_t setResolutionRhum12();  // Set humidity resolution to 12 bits
-  uint8_t setResolutionRhum11();  // Set humidity resolution to 11 bits
-  uint8_t setResolutionRhum10();  // Set humidity resolution to 10 bits
-  uint8_t setResolutionRhum8();   // Set humidity resolution to 8 bits
+inline uint8_t setAddress() { return gbj_twowire::setAddress(ADDRESS); };
+inline uint8_t setHeaterEnabled() { return setHeaterStatus(true); };  // Turn on sensor's heater
+inline uint8_t setHeaterDisabled() { return setHeaterStatus(false); };  // Turn off sensor's heater
+//
+inline uint8_t setResolutionTemp14() { return setBitResolution(false, false); };
+inline uint8_t setResolutionTemp13() { return setBitResolution(true, false); };
+inline uint8_t setResolutionTemp12() { return setBitResolution(false, true); };
+inline uint8_t setResolutionTemp11() { return setBitResolution(true, true); };
+//
+inline uint8_t setResolutionRhum12() { return setResolutionTemp14(); };
+inline uint8_t setResolutionRhum10() { return setResolutionTemp13(); };
+inline uint8_t setResolutionRhum11() { return setResolutionTemp11(); };
+inline uint8_t setResolutionRhum8() { return setResolutionTemp12(); };
+//
+inline void setHoldMasterMode(bool holdMasterMode) { _status.holdMasterMode = holdMasterMode; };
+
 
 
 /*
@@ -230,19 +203,19 @@ public:
 
   DESCRIPTION:
   The method sets the bit resolution by input parameter.
-  The resolution is determined by corresponding macro but in fact it is the bit
-  resolution for temperature.
+  The resolution is determined by corresponding constant but in fact it is
+  the bit resolution for temperature.
 
   PARAMETERS:
-  resolution  - Desired measurement resolution
+  resolution  - Desired measurement resolution.
               - Data type: non-negative integer
-              - Default value: GBJ_SI70_RES_T14_RH12
-              - Limited range: GBJ_SI70_RES_T11_RH11 ~ GBJ_SI70_RES_T14_RH12
+              - Default value: RESOLUTION_T14_RH12
+              - Limited range: RESOLUTION_T11_RH11 ~ RESOLUTION_T14_RH12
 
   RETURN:
   Result code.
 */
-  uint8_t setResolution(uint8_t resolution = GBJ_SI70_RES_T14_RH12);
+uint8_t setResolution(uint8_t resolution = RESOLUTION_T14_RH12);
 
 
 /*
@@ -256,47 +229,92 @@ public:
   PARAMETERS:
   heaterLevel - Desired heater level.
               - Data type: non-negative integer
-              - Default value: 0x0
+              - Default value: none
               - Limited range: 0x0 ~ 0xF
 
   RETURN:
   Result code.
 */
-  uint8_t setHeaterLevel(uint8_t heaterLevel = 0x0);  // Set heater level in range 0x0 ~ 0xF
+uint8_t setHeaterLevel(uint8_t heaterLevel);
 
 
 //------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
-  bool     getVddStatus();          // Flag about correct operating voltage
-  //
-  bool     getHeaterEnabled();      // Flag about enabling the sensor's heater
-  uint8_t  getHeaterLevel();        // Heater level
-  float    getHeaterCurrent();      // Heater current in milliampers
-  //
-  uint32_t getSerialUpper();        // Serial number upper double word
-  uint32_t getSerialLower();        // Serial number lower double word
-  //
-  uint8_t  getFwRevision();         // Firmware revision
-  uint8_t  getDeviceType();         // Device type identification
-  uint8_t  getResolutionTemp();     // Temperature resolution in bits
-  uint8_t  getResolutionRhum();     // Relative humidity resolution in bits
+inline uint32_t getSerialUpper() { return _status.serialSNA; };  // Serial number upper double word
+inline uint32_t getSerialLower() { return _status.serialSNB; };  // Serial number lower double word
+inline uint8_t  getFwRevision()  { return _status.fwRevision; };
+inline uint8_t  getDeviceType()  { return (_status.serialSNB >> 24); };
+inline bool  getHoldMasterMode()  { return _status.holdMasterMode; };
+bool getVddStatus();  // Flag about correct operating voltage
+bool getHeaterEnabled();  // Flag about enabling the sensor's heater
+float getHeaterCurrent();  // Heater current in milliampers
+uint8_t  getHeaterLevel();  // Heater level
+uint8_t  getResolutionTemp();  // Temperature resolution in bits
+uint8_t  getResolutionRhum();  // Relative humidity resolution in bits
 
 
 private:
 //------------------------------------------------------------------------------
+// Private constants
+//------------------------------------------------------------------------------
+enum Commands
+{
+  CMD_MEASURE_RH_HOLD = 0xE5,  // Measure Relative Humidity, Hold Master Mode
+  CMD_MEASURE_RH_NOHOLD = 0xF5,  // Measure Relative Humidity, No Hold Master Mode
+  CMD_MEASURE_TEMP_HOLD = 0xE3,  // Measure Temperature, Hold Master Mode
+  CMD_MEASURE_TEMP_NOHOLD = 0xF3,  // Measure Temperature, No Hold Master Mode
+  CMD_READ_TEMP_FROM_RH = 0xE0,  // Read Temperature Value from Previous RH Measurement
+  CMD_RESET = 0xFE,  // Reset
+  CMD_REG_RHT_WRITE = 0xE6,  // Write RH/T User Register 1
+  CMD_REG_RHT_READ = 0xE7,  // Read RH/T User Register 1
+  CMD_REG_HEATER_WRITE = 0x51,  // Write Heater Control Register
+  CMD_REG_HEATER_READ = 0x11,  // Read Heater Control Register
+  CMD_READ_SNA = 0xFA0F,  // Read Electronic ID 1st Byte
+  CMD_READ_SNB = 0xFCC9,  // Read Electronic ID 2nd Byte
+  CMD_READ_FW_REVISION = 0x84B8,  // Read Firmware Revision
+  CMD_LOCK_BYTE_WRITE = 0xC556,
+  CMD_LOCK_BYTE_VALUE = 0x00,
+};
+enum Timing
+{
+  TIMING_RESET = 50,  // Resetting delay
+  TIMING_CONVERSION = 25,  // Time delay needed for measurement conversion in milliseconds
+};
+enum Resetting
+{
+  RESET_REG_USER = 0x3A,  // Reset Settings = 0011_1010 (datasheet Register 1. User Register 1)
+  RESET_REG_HEATER = 0x00,  // Reset Settings = 0000_0000 (datasheet Register 2. Heater Control Register)
+};  // Control registers reset settings
+
+//------------------------------------------------------------------------------
 // Private attributes
 //------------------------------------------------------------------------------
-  bool     _userRegEnabled;   // Flag about initialization (reading) the user register
-  bool     _heaterRegEnabled; // Flag about initialization (reading) the heater register
-  uint8_t  _tempResolution[4] = {14, 12, 13, 11}; // List of temperature resolutions
-  uint8_t  _rhumResolution[4] = {12,  8, 10, 11}; // List of humidity resolutions
-  uint8_t  _fwRevision;       // Firmware revision
-  uint8_t  _userRegister;     // User register 1
-  uint8_t  _heaterRegister;   // Heater register
-  uint8_t  _heaterLevel;      // Heater level as 4 lower bytes in the register
-  uint32_t _serialSNA;        // Upper 4 bytes of serial number
-  uint32_t _serialSNB;        // Lower 4 bytes of serial number
+struct
+{
+  uint8_t fwRevision;  // Firmware revision
+  uint32_t serialSNA;  // Upper 4 bytes of serial number
+  uint32_t serialSNB;  // Lower 4 bytes of serial number
+  bool holdMasterMode;  // Flag about active hold master mode at measuring
+} _status;
+struct
+{
+  bool enabled;  // Flag about initialization (reading) the user register
+  uint8_t regValue;  // Value of user register 1
+} _user;  // Parameters of user register
+struct
+{
+  bool enabled;  // Flag about initialization (reading) the heater register
+  uint8_t regValue;  // Heater register value
+  uint8_t level; // Heater level as 4 lower bits in the register
+  float currentMin = 3.09;  // Minimal limit at heater level B0000
+  float currentMax = 94.20;  // Maximal limit at heater level B1111
+} _heater;  // Parameters for sensor heater
+struct
+{
+  uint8_t temp[4] = {14, 12, 13, 11};  // List of temperature resolutions
+  uint8_t rhum[4] = {12,  8, 10, 11};  // List of humidity resolutions
+} _resolusion;
 
 
 //------------------------------------------------------------------------------
@@ -319,7 +337,7 @@ private:
   RETURN:
   CRC8 checksum.
 */
-  uint8_t crc8(uint32_t data);
+uint8_t crc8(uint32_t data);
 
 
 /*
@@ -343,7 +361,7 @@ private:
   RETURN:
   Flag about correct checksum.
 */
-  bool checkCrc8(uint32_t data, uint8_t crc);
+bool checkCrc8(uint32_t data, uint8_t crc);
 
 
 /*
@@ -358,7 +376,7 @@ private:
   RETURN:
   Resolution code (0 ~ 3).
 */
-  uint8_t resolution();
+uint8_t resolution();
 
 
 /*
@@ -374,7 +392,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t readDeviceRevision();
+uint8_t readDeviceRevision();
 
 
 /*
@@ -389,7 +407,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t readFwRevision();
+uint8_t readFwRevision();
 
 
 /*
@@ -404,7 +422,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t readSerialNumber();
+uint8_t readSerialNumber();
 
 
 /*
@@ -419,7 +437,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t readUserRegister();
+uint8_t readUserRegister();
 
 
 /*
@@ -434,7 +452,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t writeUserRegister();
+uint8_t writeUserRegister();
 
 
 /*
@@ -449,7 +467,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t readHeaterRegister();
+uint8_t readHeaterRegister();
 
 
 /*
@@ -464,7 +482,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t writeHeaterRegister();
+uint8_t writeHeaterRegister();
 
 
 /*
@@ -482,7 +500,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t setHeaterStatus(bool status);
+uint8_t setHeaterStatus(bool status);
 
 
 /*
@@ -506,7 +524,7 @@ private:
   RETURN:
   Result code.
 */
-  uint8_t setBitResolution(bool bitRes1, bool bitRes0);
+uint8_t setBitResolution(bool bitRes1, bool bitRes0);
 
 
 /*
@@ -521,9 +539,9 @@ private:
             - Default value: none
             - Limited range: 0 ~ 0xFF
   RETURN:
-  Temperature in centigrade or error code GBJ_SI70_ERR_MEASURE_TEMP.
+  Temperature in centigrade or error code ERROR_MEASURE_TEMP.
 */
-  float readTemperature(uint8_t command);
+float readTemperature(uint8_t command);
 
 
 /*
@@ -541,7 +559,7 @@ private:
   RETURN:
   Temperature in centigrade.
 */
-  float calculateTemperature(uint16_t wordMeasure);
+float calculateTemperature(uint16_t wordMeasure);
 
 
 /*
@@ -559,7 +577,7 @@ private:
   RETURN:
   Relative humidity in per-cents.
 */
-  float calculateHumidity(uint16_t wordMeasure);
+float calculateHumidity(uint16_t wordMeasure);
 
 };
 

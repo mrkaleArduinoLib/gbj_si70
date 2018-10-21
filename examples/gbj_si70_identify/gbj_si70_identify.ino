@@ -1,6 +1,6 @@
 /*
   NAME:
-  Using the gbj_si70 library for identifying the sensor SI70xx.
+  Using the gbjSI70 library for identifying the sensor SI70xx.
 
   DESCRIPTION:
   The sketch displays all identification and status data stored in the Sensor.
@@ -14,17 +14,40 @@
   CREDENTIALS:
   Author: Libor Gabaj
 */
-#include "gbj_si70.h"
 #define SKETCH "GBJ_SI70_IDENTIFY 1.0.0"
 
+#include "gbj_si70.h"
+
+
 gbj_si70 Sensor = gbj_si70();
+// gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_100KHZ, true, D2, D1);
+// gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_400KHZ);
 
 
 void errorHandler()
 {
   if (Sensor.isSuccess()) return;
   Serial.print("Error: ");
-  Serial.println(Sensor.getLastResult());
+  Serial.print(Sensor.getLastResult());
+  Serial.print(" - ");
+  switch (Sensor.getLastResult())
+  {
+    case gbj_si70::ERROR_ADDRESS:
+      Serial.println("Bad address");
+      break;
+
+    case gbj_twowire::ERROR_PINS:
+      Serial.println("Bad pins");
+      break;
+
+    case gbj_si70::ERROR_NACK_OTHER:
+      Serial.println("Other error");
+      break;
+
+    default:
+      Serial.println("Uknown error");
+      break;
+  }
 }
 
 
@@ -33,12 +56,12 @@ void setup()
   Serial.begin(9600);
   Serial.println(SKETCH);
   Serial.println("Libraries:");
-  Serial.println(GBJ_TWOWIRE_VERSION);
-  Serial.println(GBJ_SI70_VERSION);
+  Serial.println(gbj_twowire::VERSION);
+  Serial.println(gbj_si70::VERSION);
   Serial.println("---");
 
   // Initialize Sensor
-  if (Sensor.begin()) // Use default bus stop flag
+  if (Sensor.begin()) // Use default holdMasterMode
   {
     errorHandler();
     return;
@@ -47,17 +70,17 @@ void setup()
   Serial.print("Sensor: ");
   switch (Sensor.getDeviceType())
   {
-    case GBJ_SI70_TYPE_7021:
+    case gbj_si70::TYPE_7021:
       Serial.print("Si7021");
       break;
-    case GBJ_SI70_TYPE_7020:
+    case gbj_si70::TYPE_7020:
       Serial.print("Si7020");
       break;
-    case GBJ_SI70_TYPE_7013:
+    case gbj_si70::TYPE_7013:
       Serial.print("Si7013");
       break;
-    case GBJ_SI70_TYPE_SAMPLE1:
-    case GBJ_SI70_TYPE_SAMPLE2:
+    case gbj_si70::TYPE_SAMPLE1:
+    case gbj_si70::TYPE_SAMPLE2:
       Serial.print("Sample");
       break;
     default:
@@ -66,10 +89,10 @@ void setup()
   }
   switch (Sensor.getFwRevision())
   {
-    case GBJ_SI70_FW_VERSION_10:
+    case gbj_si70::FW_VERSION_10:
       Serial.print("-A10");
       break;
-    case GBJ_SI70_FW_VERSION_20:
+    case gbj_si70::FW_VERSION_20:
       Serial.print("-A20");
       break;
     default:
@@ -88,7 +111,7 @@ void setup()
   Serial.println(Sensor.getFwRevision(), HEX);
   // Serial number
   char text[30];
-  snprintf(text, 30, "0x%08lX - 0x%08lX", Sensor.getSerialUpper(), Sensor.getSerialLower());
+  snprintf(text, 30, "0x%08lx - 0x%08lx", (long) Sensor.getSerialUpper(), (long) Sensor.getSerialLower());
   Serial.print("Serial Number: ");
   Serial.println(text);
   // Vdd status

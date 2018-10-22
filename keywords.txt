@@ -35,8 +35,9 @@ getResolutionTemp	KEYWORD2
 getResolutionRhum	KEYWORD2
 getDeviceType	KEYWORD2
 getFwRevision	KEYWORD2
-getSerialUpper	KEYWORD2
-getSerialLower	KEYWORD2
+getSNA	KEYWORD2
+getSNB	KEYWORD2
+getSerialNumber	KEYWORD2
 getVddStatus	KEYWORD2
 getHoldMasterMode	KEYWORD2
 

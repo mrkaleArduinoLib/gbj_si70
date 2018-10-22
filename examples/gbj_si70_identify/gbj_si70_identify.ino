@@ -174,7 +174,7 @@ void setup()
   Serial.println(Sensor.getFwRevision(), HEX);
   // Serial number
   char text[30];
-  snprintf(text, 30, "0x%08lx - 0x%08lx", (long) Sensor.getSerialUpper(), (long) Sensor.getSerialLower());
+  snprintf(text, 30, "0x%08lx-%08lx", (long) Sensor.getSNA(), (long) Sensor.getSNB());
   Serial.print("Serial Number: ");
   Serial.println(text);
   // Vdd status

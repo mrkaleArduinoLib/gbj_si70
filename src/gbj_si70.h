@@ -243,8 +243,9 @@ uint8_t setHeaterLevel(uint8_t heaterLevel);
 //------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
-inline uint32_t getSerialUpper() { return _status.serialSNA; };  // Serial number upper double word
-inline uint32_t getSerialLower() { return _status.serialSNB; };  // Serial number lower double word
+inline uint32_t getSNA() { return _status.serialSNA; };
+inline uint32_t getSNB() { return _status.serialSNB; };
+uint64_t getSerialNumber();
 inline uint8_t  getFwRevision()  { return _status.fwRevision; };
 inline uint8_t  getDeviceType()  { return (_status.serialSNB >> 24); };
 inline bool  getHoldMasterMode()  { return _status.holdMasterMode; };

@@ -2,6 +2,7 @@
 # gbjSI70
 Library for the humidity and temperature sensors *SI70xx*, especially **SI7021** on board GY-21 communicating on two-wire (I2C) bus.
 - Sensor address is `0x40` hardcoded and cannot be changed by any library method.
+- The sensor provides the general access address `0x00` as well, but it is not utilized by the library.
 
 #### Particle hardware configuration
 - Connect microcontroller's pin `D0` to sensor's pin **SDA** (Serial Data).
@@ -64,7 +65,6 @@ Library has been inspired by the library *Adafruit_Si7021*.
 
 <a id="errors"></a>
 #### Error codes
-- **gbj\_si70::ERR\_ADDRESS**: Bad address.
 - **gbj\_si70::ERR\_RESET**: Sensor reset failure.
 - **gbj\_si70::ERR\_FIRMWARE**: Firmware revision reading failure.
 - **gbj\_si70::ERR\_SERIAL\_A**: Serial number upper double word reading failure.
@@ -111,8 +111,9 @@ Other error codes as well as result code are inherited from the parent library [
 - [getHeaterEnabled()](#getHeaterEnabled)
 - [getHeaterLevel()](#getHeaterLevel)
 - [getHeaterCurrent()](#getHeaterCurrent)
-- [getSerialUpper()](#getSerial)
-- [getSerialLower()](#getSerial)
+- [getSNA()](#getSerial)
+- [getSNB()](#getSerial)
+- [getSerialNumber()](#getSerial)
 - [getVddStatus()](#getVddStatus)
 - [getHoldMasterMode()](#getHoldMasterMode)
 
@@ -132,8 +133,8 @@ The library does not need special constructor and destructor, so that the inheri
 #### Parameters
 <a id="prm_busClock"></a>
 - **clockSpeed**: Two-wire bus clock frequency in Hertz. If the clock is not from enumeration, it fallbacks to 100 kHz.
-  - *Valid values*: gbj\gbj_si70::CLOCK\_100KHZ, gbj\gbj_si70::CLOCK\_400KHZ
-  - *Default value*: gbj\gbj_si70::CLOCK\_100KHZ
+  - *Valid values*: gbj\_si70::CLOCK\_100KHZ, gbj\_si70::CLOCK\_400KHZ
+  - *Default value*: gbj\_si70::CLOCK\_100KHZ
 
 
 <a id="prm_busStop"></a>
@@ -178,7 +179,7 @@ The method takes, sanitizes, and stores sensor parameters to a class instance ob
 - All the method parameters can be changed dynamically with corresponding [setters](#interface) later in a sketch.
 
 #### Syntax
-    uint8_t begin(boolean holdMasterMode);
+    uint8_t begin(bool holdMasterMode);
 
 #### Parameters
 <a id="holdMasterMode"></a>
@@ -463,7 +464,7 @@ Some of [result or error codes](#constants).
 The method returns the status of the sensor's heater.
 
 #### Syntax
-    boolean getHeaterEnabled();
+    bool getHeaterEnabled();
 
 #### Parameters
 None
@@ -567,9 +568,7 @@ Device type defined by library macro constant [gbj\_si70::TYPE\_7013](#type), [g
 #### See also
 [getFwRevision()](#getFwRevision)
 
-[getSerialUpper()](#getSerialUpper)
-
-[getSerialLower()](#getSerialLower)
+[getSNA(), getSNB(), getSerialNumber()](#getSerial)
 
 [Back to interface](#interface)
 
@@ -591,27 +590,26 @@ Firmware revision either [gbj\_si70::FW\_VERSION\_10](#firmware) or [gbj\_si70::
 #### See also
 [getDeviceType()](#getDeviceType)
 
-[getSerialUpper()](#getSerialUpper)
-
-[getSerialLower()](#getSerialLower)
+[getSNA(), getSNB(), getSerialNumber()](#getSerial)
 
 [Back to interface](#interface)
 
 
 <a id="getSerial"></a>
-## getSerialUpper(), getSerialLower()
+## getSNA(), getSNB(), getSerialNumber()
 #### Description
-The particular method returns the corresponding part of the serial number as a double word (32-bit), so that the entire serial number of the sensor is 64-bit value.
+The particular method returns the corresponding 32-bit part of the serial number as a double word and the entire 64-bit serial number of the sensor.
 
 #### Syntax
-    uint32_t getSerialUpper();
-    uint32_t getSerialLower();
+    uint32_t getSNA();
+    uint32_t getSNB();
+    uint64_t getSerialNumber();
 
 #### Parameters
 None
 
 #### Returns
-Upper or lower serial double word or some of [error codes](#errors).
+Upper (SNA), lower (SNB) serial double word, or entire serial number, or some of [error codes](#errors).
 
 #### See also
 [getDeviceType()](#getDeviceType)
@@ -627,7 +625,7 @@ Upper or lower serial double word or some of [error codes](#errors).
 The method returns the status of the supply voltage, which the sensor is powered by.
 
 #### Syntax
-    boolean getVddStatus();
+    bool getVddStatus();
 
 #### Parameters
 None

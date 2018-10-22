@@ -7,8 +7,8 @@
   respective measurement units.
   - Connect sensor's pins to microcontroller's I2C bus as described in README.md
     for used platform accordingly.
-  - The sketch sets resolution by library macro constants for demonstration of
-    their usage.
+  - The sketch sets resolution by library constants for demonstration of their
+    usage.
 
   LICENSE:
   This program is free software; you can redistribute it and/or modify

@@ -129,7 +129,7 @@ uint8_t gbj_si70::setHeaterLevel(uint8_t heaterLevel)
 //------------------------------------------------------------------------------
 bool gbj_si70::getVddStatus()
 {
-  // Alway read user register, because the voltage status is update after
+  // Always read user register, because the voltage status is update after
   // each measurement
   if (readUserRegister()) return false;
   uint8_t status = (_user.regValue >> 6) & B1;
@@ -193,6 +193,16 @@ uint8_t gbj_si70::getResolutionRhum()
     if (readUserRegister()) return getLastResult();
   }
   return _resolusion.rhum[resolution()];
+}
+
+
+uint64_t gbj_si70::getSerialNumber()
+{
+  uint64_t serial;
+  serial = _status.serialSNA;
+  serial <<= 32;
+  serial |= _status.serialSNB;
+  return serial;
 }
 
 

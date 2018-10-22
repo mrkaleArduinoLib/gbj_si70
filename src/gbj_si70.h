@@ -89,7 +89,9 @@ gbj_si70(uint32_t clockSpeed = CLOCK_100KHZ, bool busStop = true, \
   which determines the operation modus of the sensor.
 
   PARAMETERS:
-  holdMasterMode - Flag about active hold master mode at measuring.
+  holdMasterMode - Flag about blocking (holding) serial clock line during
+                   measurement. At no holding master mode other communication
+                   on the bus can be performed.
                    - Data type: boolean
                    - Default value: false
                    - Limited range: true, false
@@ -265,7 +267,7 @@ enum Commands
   CMD_MEASURE_TEMP_HOLD = 0xE3,  // Measure Temperature, Hold Master Mode
   CMD_MEASURE_TEMP_NOHOLD = 0xF3,  // Measure Temperature, No Hold Master Mode
   CMD_READ_TEMP_FROM_RH = 0xE0,  // Read Temperature Value from Previous RH Measurement
-  CMD_RESET = 0xFE,  // Reset
+  CMD_RESET = 0xFE,  // Soft reset
   CMD_REG_RHT_WRITE = 0xE6,  // Write RH/T User Register 1
   CMD_REG_RHT_READ = 0xE7,  // Read RH/T User Register 1
   CMD_REG_HEATER_WRITE = 0x51,  // Write Heater Control Register
@@ -341,7 +343,7 @@ uint8_t crc8(uint32_t data);
 
 
 /*
-  Validate 32-bit integer by provided CRC8 checksum.
+  Validate 32-bit integer by provided CRC8 checksum with polynom x^8+x^5+x^4+1.
 
   DESCRIPTION:
   The method checks whether provided CRC8 checksum is valid for input long

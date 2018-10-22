@@ -25,24 +25,87 @@ gbj_si70 Sensor = gbj_si70();
 // gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_400KHZ);
 
 
-void errorHandler()
+void errorHandler(String location)
 {
   if (Sensor.isSuccess()) return;
-  Serial.print("Error: ");
+  Serial.print(location);
+  Serial.print(" - Error: ");
   Serial.print(Sensor.getLastResult());
   Serial.print(" - ");
   switch (Sensor.getLastResult())
   {
+    // General
     case gbj_si70::ERROR_ADDRESS:
-      Serial.println("Bad address");
+      Serial.println("ERROR_ADDRESS");
       break;
 
-    case gbj_twowire::ERROR_PINS:
-      Serial.println("Bad pins");
+    case gbj_si70::ERROR_PINS:
+      Serial.println("ERROR_PINS");
+      break;
+
+    // Arduino, Esspressif specific
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
+    case gbj_si70::ERROR_BUFFER:
+      Serial.println("ERROR_BUFFER");
+      break;
+
+    case gbj_si70::ERROR_NACK_DATA:
+      Serial.println("ERROR_PINS");
       break;
 
     case gbj_si70::ERROR_NACK_OTHER:
-      Serial.println("Other error");
+      Serial.println("ERROR_NACK_OTHER");
+      break;
+
+    // Particle specific
+#elif defined(PARTICLE)
+    case gbj_si70::ERROR_BUSY:
+      Serial.println("ERROR_BUSY");
+      break;
+
+    case gbj_si70::ERROR_END:
+      Serial.println("ERROR_END");
+      break;
+
+    case gbj_si70::ERROR_TRANSFER:
+      Serial.println("ERROR_TRANSFER");
+      break;
+
+    case gbj_si70::ERROR_TIMEOUT:
+      Serial.println("ERROR_TIMEOUT");
+      break;
+#endif
+
+    case gbj_si70::ERROR_RESET:
+      Serial.println("ERROR_RESET");
+      break;
+
+    case gbj_si70::ERROR_FIRMWARE:
+      Serial.println("ERROR_FIRMWARE");
+      break;
+
+    case gbj_si70::ERROR_SERIAL_A:
+      Serial.println("ERROR_SERIAL_A");
+      break;
+
+    case gbj_si70::ERROR_SERIAL_B:
+      Serial.println("ERROR_SERIAL_B");
+      break;
+
+    case gbj_si70::ERROR_REG_RHT_READ:
+      Serial.println("ERROR_REG_RHT_READ");
+      break;
+
+    case gbj_si70::ERROR_REG_HEATER_READ:
+      Serial.println("ERROR_REG_HEATER_READ");
+      break;
+
+    case gbj_si70::ERROR_MEASURE_RHUM:
+      Serial.println("ERROR_MEASURE_RHUM");
+      break;
+
+    case gbj_si70::ERROR_MEASURE_TEMP:
+      Serial.println("ERROR_MEASURE_TEMP");
       break;
 
     default:
@@ -64,7 +127,7 @@ void setup()
   // Initialize Sensor
   if (Sensor.begin()) // Use default holdMasterMode
   {
-    errorHandler();
+    errorHandler("Begin");
     return;
   }
   // List possible resolution
@@ -100,7 +163,7 @@ void setup()
       Serial.print(" - RH: ");
       Serial.println(Sensor.getResolutionRhum());
     }
-    errorHandler();
+    errorHandler("Resolution");
   }
 }
 

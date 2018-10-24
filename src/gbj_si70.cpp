@@ -17,6 +17,7 @@ uint8_t gbj_si70::reset()
 {
   if (busSend(CMD_RESET)) return getLastResult();
   wait(TIMING_RESET);  // Wait for resetting
+  if (setHeaterDisabled()) return getLastResult(); // Turn off heater
 
   // Send command to read control user register 1
   if (busSend(CMD_REG_RHT_READ)) return getLastResult();
@@ -74,6 +75,23 @@ float gbj_si70::measureTemperature()
   {
     return readTemperature(CMD_MEASURE_TEMP_NOHOLD);
   }
+}
+
+
+float gbj_si70::calculateDewpoint(float rhum, float temp)
+{
+  // const float A = 8.1332;  // Just for partial pressure calculation
+  const float B = 1762.39;
+  const float C = 235.66;
+  // Check input parameters
+  if (rhum <= 0.0) return setLastResult(ERROR_MEASURE_RHUM);
+  if (temp <= -273.15) return setLastResult(ERROR_MEASURE_TEMP);
+  if (temp == -1.0 * B) return setLastResult(ERROR_MEASURE_TEMP);
+  // Calculate
+  float dewpoint = log10(rhum) - 2.0 - (B / (temp + C));
+  if (dewpoint == 0) return setLastResult(ERROR_MEASURE_TEMP);
+  dewpoint = B / dewpoint + C;
+  return -1.0 * dewpoint;
 }
 
 

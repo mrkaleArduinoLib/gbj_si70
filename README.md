@@ -86,6 +86,7 @@ Other error codes as well as result code are inherited from the parent library [
 - [reset()](#reset)
 - [measureHumidity()](#measureHumidity)
 - [measureTemperature()](#measureTemperature)
+- [calculateDewpoint()](#calculateDewpoint)
 - [writeLockByte()](#writeLockByte)
 
 #### Setters
@@ -297,6 +298,38 @@ setup()
 
 #### See also
 [measureHumidity()](#measureHumidity)
+
+[getLastResult()](#getLastResult)
+
+[Back to interface](#interface)
+
+
+<a id="calculateDewpoint"></a>
+## calculateDewpoint()
+#### Description
+The method takes, sanitizes, and stores sensor parameters to a class instance object and initiates two-wire bus.
+- The method sets parameters specific to the sensor itself.
+- All the method parameters can be changed dynamically with corresponding [setters](#interface) later in a sketch.
+
+#### Syntax
+    uint8_t calculateDewpoint(float rhum, float temp);
+
+#### Parameters
+- **rhum**: Ambient relative humidity in per cent.
+  - *Valid values*: rational numbers greater than 0.0
+  - *Default value*: none
+
+- **temp**: Ambient temperature in centigrade.
+  - *Valid values*: rational numbers greater than -273.15 but other than -235.66
+  - *Default value*: none
+
+#### Returns
+Dew point temperature in centigrade or the error value either [gbj\_si70::ERROR\_MEASURE\_RHUM](#errors) or [gbj\_si70::ERROR\_MEASURE\_TEMP](#errors) with corresponding error code in the library object.
+
+#### See also
+[measureHumidity()](#measureHumidity)
+
+[measureTemperature()](#measureTemperature)
 
 [getLastResult()](#getLastResult)
 

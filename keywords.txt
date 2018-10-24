@@ -15,6 +15,7 @@ reset	KEYWORD2
 writeLockByte	KEYWORD2
 measureHumidity	KEYWORD2
 measureTemperature	KEYWORD2
+calculateDewpoint	KEYWORD2
 setResolution	KEYWORD2
 setResolutionTemp14	KEYWORD2
 setResolutionTemp13	KEYWORD2

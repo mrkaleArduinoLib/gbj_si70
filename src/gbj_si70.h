@@ -179,6 +179,30 @@ float measureHumidity(float *temperature);
 float measureTemperature();
 
 
+/*
+  Calculate dew point temperature.
+
+  DESCRIPTION:
+  The method calculates dew point temperature from provided temperature
+  and relative humidity.
+
+  PARAMETERS:
+  rhum - Ambient relative humidity in per cents.
+         - Data type: float
+         - Default value: none
+         - Limited range: > 0.0
+
+  temp - Ambient temperature in centigrades.
+         - Data type: float
+         - Default value: none
+         - Limited range: > -273.15 and <> -235.66
+
+  RETURN:
+  Temperature of dew point in centigrades.
+*/
+float calculateDewpoint(float rhum, float temp);
+
+
 //------------------------------------------------------------------------------
 // Public setters - they usually return result code.
 //------------------------------------------------------------------------------

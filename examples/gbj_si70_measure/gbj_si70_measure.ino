@@ -26,7 +26,7 @@ gbj_si70 Sensor = gbj_si70();
 // gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_100KHZ, true, D2, D1);
 // gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_400KHZ);
 
-float tempValue, rhumValue;
+float tempValue, rhumValue, dewpValue;
 
 
 void errorHandler(String location)
@@ -139,7 +139,7 @@ void setup()
     errorHandler("Resolution");
     return;
   }
-  Serial.println("Temperature ('C) / Humidity (%)");
+  Serial.println("Humidity (%) / Temperature ('C) / Dewpoint ('C)");
 }
 
 
@@ -149,9 +149,15 @@ void loop()
   rhumValue = Sensor.measureHumidity(&tempValue);
   if (Sensor.isSuccess())
   {
-    Serial.print(tempValue);
-    Serial.print(" / ");
-    Serial.println(rhumValue);
+    dewpValue = Sensor.calculateDewpoint(rhumValue, tempValue);
+    if (Sensor.isSuccess())
+    {
+      Serial.print(rhumValue);
+      Serial.print(" / ");
+      Serial.print(tempValue);
+      Serial.print(" / ");
+      Serial.println(dewpValue);
+    }
   }
   errorHandler("Measurement");
   delay(PERIOD_MEASURE);

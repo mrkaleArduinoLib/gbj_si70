@@ -307,17 +307,16 @@ setup()
 <a id="calculateDewpoint"></a>
 ## calculateDewpoint()
 #### Description
-The method takes, sanitizes, and stores sensor parameters to a class instance object and initiates two-wire bus.
-- The method sets parameters specific to the sensor itself.
-- All the method parameters can be changed dynamically with corresponding [setters](#interface) later in a sketch.
+The method calculates dew point temperature from provided ambient relative humidity and temperature.
 
 #### Syntax
-    uint8_t calculateDewpoint(float rhum, float temp);
+    float calculateDewpoint(float rhum, float temp);
 
 #### Parameters
 - **rhum**: Ambient relative humidity in per cent.
   - *Valid values*: rational numbers greater than 0.0
   - *Default value*: none
+
 
 - **temp**: Ambient temperature in centigrade.
   - *Valid values*: rational numbers greater than -273.15 but other than -235.66

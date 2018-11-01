@@ -3,6 +3,8 @@
 Library for the humidity and temperature sensors *SI70xx*, especially **SI7021** on board GY-21 communicating on two-wire (I2C) bus.
 - Sensor address is `0x40` hardcoded and cannot be changed by any library method.
 - The sensor provides the general access address `0x00` as well, but it is not utilized by the library.
+- The library provides measured temperature in degrees of Celsius and relative humidity in percentage.
+- For conversion among various temperature unit scales and for calculating dew point temperature use library **gbjAppHelpers**.
 
 #### Particle hardware configuration
 - Connect microcontroller's pin `D0` to sensor's pin **SDA** (Serial Data).
@@ -86,7 +88,6 @@ Other error codes as well as result code are inherited from the parent library [
 - [reset()](#reset)
 - [measureHumidity()](#measureHumidity)
 - [measureTemperature()](#measureTemperature)
-- [calculateDewpoint()](#calculateDewpoint)
 - [writeLockByte()](#writeLockByte)
 
 #### Setters
@@ -298,37 +299,6 @@ setup()
 
 #### See also
 [measureHumidity()](#measureHumidity)
-
-[getLastResult()](#getLastResult)
-
-[Back to interface](#interface)
-
-
-<a id="calculateDewpoint"></a>
-## calculateDewpoint()
-#### Description
-The method calculates dew point temperature from provided ambient relative humidity and temperature.
-
-#### Syntax
-    float calculateDewpoint(float rhum, float temp);
-
-#### Parameters
-- **rhum**: Ambient relative humidity in per cent.
-  - *Valid values*: rational numbers greater than 0.0
-  - *Default value*: none
-
-
-- **temp**: Ambient temperature in centigrade.
-  - *Valid values*: rational numbers greater than -273.15 but other than -235.66
-  - *Default value*: none
-
-#### Returns
-Dew point temperature in centigrade or the error value either [gbj\_si70::ERROR\_MEASURE\_RHUM](#errors) or [gbj\_si70::ERROR\_MEASURE\_TEMP](#errors) with corresponding error code in the library object.
-
-#### See also
-[measureHumidity()](#measureHumidity)
-
-[measureTemperature()](#measureTemperature)
 
 [getLastResult()](#getLastResult)
 

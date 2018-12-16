@@ -5,12 +5,14 @@ const String gbj_si70::VERSION = "GBJ_SI70 1.0.0";
 uint8_t gbj_si70::begin(bool holdMasterMode)
 {
   if (gbj_twowire::begin()) return getLastResult();
-  _userReg.value = 0;
   if (setAddress()) return getLastResult();
   setUseValuesMax();
   setHoldMasterMode(holdMasterMode);
   if (reset()) return getLastResult();
+  bool origBusStop = getBusStop();
+  setBusRpte();
   if (readFwRevision()) return getLastResult();
+  setBusStopFlag(origBusStop);
   if (readSerialNumber()) return getLastResult();
   return getLastResult();
 }
@@ -30,7 +32,10 @@ uint8_t gbj_si70::reset()
 
 uint8_t gbj_si70::writeLockByte()
 {
+  bool origBusStop = getBusStop();
+  setBusRpte();
   if (busSend(CMD_LOCK_BYTE_WRITE)) return getLastResult();
+  setBusStopFlag(origBusStop);
   if (busSend(CMD_LOCK_BYTE_VALUE)) return getLastResult();
   return getLastResult();
 }
@@ -55,7 +60,10 @@ float gbj_si70::measureHumidity()
 
 float gbj_si70::measureHumidity(float *temperature)
 {
+  bool origBusStop = getBusStop();
+  setBusRpte();
   float humidity = measureHumidity();
+  setBusStopFlag(origBusStop);
   *temperature = readTemperature(CMD_READ_TEMP_FROM_RH);
   return humidity;
 }
@@ -104,8 +112,6 @@ uint8_t gbj_si70::setResolution(uint8_t resolution)
 
 uint8_t gbj_si70::setHeaterLevel(uint8_t heaterLevel)
 {
-  initLastResult();
-  // Read heater control register if needed
   if (!_heater.enabled)
   {
     if (readHeaterRegister()) return getLastResult();
@@ -115,7 +121,7 @@ uint8_t gbj_si70::setHeaterLevel(uint8_t heaterLevel)
   {
     _heater.regValue &= B11110000;     // Reset heater level
     _heater.regValue |= heaterLevel;   // Set heater level
-    return writeHeaterRegister();
+    if (writeHeaterRegister()) return getLastResult();
   }
   return getLastResult();
 }
@@ -136,7 +142,6 @@ bool gbj_si70::getVddStatus()
 
 bool gbj_si70::getHeaterEnabled()
 {
-  // Read user register if needed
   if (!_userReg.read)
   {
     if (readUserRegister()) return false;
@@ -282,8 +287,11 @@ uint8_t  gbj_si70::resolution()
 
 uint8_t gbj_si70::readFwRevision()
 {
+  bool origBusStop = getBusStop();
+  setBusRpte();
   if (busSend(CMD_READ_FW_REVISION)) return setLastResult(ERROR_FIRMWARE);
   uint8_t data[1];
+  setBusStopFlag(origBusStop);
   if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_FIRMWARE);
   _status.fwRevision = data[0];
   return getLastResult();
@@ -292,6 +300,8 @@ uint8_t gbj_si70::readFwRevision()
 
 uint8_t gbj_si70::readSerialNumber()
 {
+  bool origBusStop = getBusStop();
+  setBusRpte();
   // Ask for SNA bytes
   {
     uint8_t data[8];
@@ -315,6 +325,7 @@ uint8_t gbj_si70::readSerialNumber()
     if (busSend(CMD_READ_SNB)) return setLastResult(ERROR_SERIAL_B);
     // Read and validate SNB - 4 lower bytes of serial number
     uint8_t data[6];
+    setBusStopFlag(origBusStop);
     if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_SERIAL_B);
     _status.serialSNB = 0x00000000;
     /* From SNB_3 to SNB_0
@@ -336,9 +347,12 @@ uint8_t gbj_si70::readSerialNumber()
 
 uint8_t gbj_si70::readUserRegister()
 {
+  bool origBusStop = getBusStop();
+  setBusRpte();
   if (busSend(CMD_REG_RHT_READ)) return setLastResult(ERROR_REG_RHT_READ);
   uint8_t data[1];
-  if (busReceive(data, 1)) return setLastResult(ERROR_REG_RHT_READ);
+  setBusStopFlag(origBusStop);
+  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_REG_RHT_READ);
   _userReg.value = data[0];
   _userReg.read = true;
   return getLastResult();
@@ -355,9 +369,12 @@ uint8_t gbj_si70::writeUserRegister()
 
 uint8_t gbj_si70::readHeaterRegister()
 {
+  bool origBusStop = getBusStop();
+  setBusRpte();
   if (busSend(CMD_REG_HEATER_READ)) return setLastResult(ERROR_REG_HEATER_READ);
   uint8_t data[1];
-  if (busReceive(data, 1)) return setLastResult(ERROR_REG_HEATER_READ);
+  setBusStopFlag(origBusStop);
+  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_REG_HEATER_READ);
   _heater.regValue = data[0];
   _heater.enabled = true;
   return getLastResult();
@@ -374,7 +391,6 @@ uint8_t gbj_si70::writeHeaterRegister()
 
 uint8_t gbj_si70::setHeaterStatus(bool status)
 {
-  initLastResult();
   // Read user register if needed
   if (!_userReg.read)
   {
@@ -397,7 +413,6 @@ uint8_t gbj_si70::setHeaterStatus(bool status)
 
 uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
 {
-  initLastResult();
   // Read user register if needed
   if (!_userReg.read)
   {

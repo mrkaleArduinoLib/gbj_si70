@@ -8,6 +8,7 @@ uint8_t gbj_si70::begin(bool holdMasterMode)
   if (setAddress()) return getLastResult();
   setUseValuesMax();
   setHoldMasterMode(holdMasterMode);
+  _userReg.value = 0;
   if (reset()) return getLastResult();
   bool origBusStop = getBusStop();
   setBusRpte();
@@ -21,7 +22,14 @@ uint8_t gbj_si70::begin(bool holdMasterMode)
 uint8_t gbj_si70::reset()
 {
   if (busSend(CMD_RESET)) return getLastResult();
-  wait(getUseValuesTyp() ? TIMING_RESET_TYP : TIMING_RESET_MAX);
+  if (_userReg.value == 0)  // Power-up reset
+  {
+    wait(getUseValuesTyp() ? TIMING_POWERUP_TYP : TIMING_POWERUP_MAX);
+  }
+  else // Software reset
+  {
+    wait(getUseValuesTyp() ? TIMING_RESET_TYP : TIMING_RESET_MAX);
+  }
   // Check user register 1 reset value
   if (readUserRegister()) return getLastResult();
   if (_userReg.value != RESET_REG_USER) return setLastResult(ERROR_RESET);
@@ -41,31 +49,40 @@ uint8_t gbj_si70::writeLockByte()
 }
 
 
-float gbj_si70::measureHumidity()
-{
-  if (getHoldMasterMode() && busSend(CMD_MEASURE_RH_HOLD)) return setLastResult(ERROR_MEASURE_RHUM);
-  if (!getHoldMasterMode() && busSend(CMD_MEASURE_RH_NOHOLD)) return setLastResult(ERROR_MEASURE_RHUM);
-  // Read measuring and checksum bytes
-  wait(getUseValuesTyp() ? getConversionTimeRhumTyp() : getConversionTimeRhumMax());
-  uint8_t data[3];
-  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_MEASURE_RHUM);
-  uint16_t wordMeasure;
-  wordMeasure = data[0] << 8;   // MSB
-  wordMeasure |= data[1];       // LSB
-  if (!checkCrc8((uint32_t) wordMeasure, data[2])) return setLastResult(ERROR_MEASURE_RHUM);
-  // Convert measured humidity to percentage of relative humidity
-  return calculateHumidity(wordMeasure);
-}
-
-
-float gbj_si70::measureHumidity(float *temperature)
+float gbj_si70::readTemperature(uint8_t command)
 {
   bool origBusStop = getBusStop();
-  setBusRpte();
-  float humidity = measureHumidity();
-  setBusStopFlag(origBusStop);
-  *temperature = readTemperature(CMD_READ_TEMP_FROM_RH);
-  return humidity;
+  uint8_t data[3];
+  uint16_t wordMeasure;
+  for (uint8_t i; i < PARAM_CRC_CHECKS; i++)
+  {
+    if (getHoldMasterMode())
+    {
+      setBusRpte();
+      if (busSend(command)) break;
+      setBusStopFlag(origBusStop);
+      if (busReceive(data, sizeof(data)/sizeof(data[0]))) break;
+    }
+    else
+    {
+      setBusRpte();
+      uint32_t waitNACK = (getUseValuesTyp() ? getConversionTimeTempTyp() : getConversionTimeTempMax());
+      if (busSend(command)) break;
+      setBusStopFlag(origBusStop);
+      while (busReceive(data, sizeof(data)/sizeof(data[0])) == ERROR_RCV_DATA)
+      {
+        wait(waitNACK);
+      };
+      if (getLastResult()) break;
+    }
+    wordMeasure = data[0] << 8;   // MSB
+    wordMeasure |= data[1];       // LSB
+    // if (checkCrc8((uint32_t) wordMeasure, data[2])) return calculateTemperature(wordMeasure);
+    if (data[0] == data[2] || checkCrc8((uint32_t) wordMeasure, data[2])) \
+      return calculateTemperature(wordMeasure);
+  }
+  setLastResult(getLastResult() == SUCCESS ? ERROR_MEASURE_TEMP : getLastResult());
+  return (float) PARAM_BAD_RHT;
 }
 
 
@@ -79,6 +96,53 @@ float gbj_si70::measureTemperature()
   {
     return readTemperature(CMD_MEASURE_TEMP_NOHOLD);
   }
+}
+
+
+float gbj_si70::measureHumidity()
+{
+  bool origBusStop = getBusStop();
+  uint8_t data[3];
+  uint16_t wordMeasure;
+  for (uint8_t i; i < PARAM_CRC_CHECKS; i++)
+  {
+    if (getHoldMasterMode())
+    {
+      setBusRpte();
+      if (busSend(CMD_MEASURE_RH_HOLD)) break;
+      setBusStopFlag(origBusStop);
+      if (busReceive(data, sizeof(data)/sizeof(data[0]))) break;
+    }
+    else
+    {
+      setBusRpte();
+      uint32_t waitNACK = (getUseValuesTyp() ? getConversionTimeRhumTyp() : getConversionTimeRhumMax());
+      if (busSend(CMD_MEASURE_RH_NOHOLD)) break;
+      setBusStopFlag(origBusStop);
+      while (busReceive(data, sizeof(data)/sizeof(data[0])) == ERROR_RCV_DATA)
+      {
+        wait(waitNACK);
+      };
+      if (getLastResult()) break;
+    }
+    wordMeasure = data[0] << 8;   // MSB
+    wordMeasure |= data[1];       // LSB
+    if (data[0] == data[2] || checkCrc8((uint32_t) wordMeasure, data[2])) \
+    return calculateHumidity(wordMeasure);
+  }
+  setLastResult(getLastResult() == SUCCESS ? ERROR_MEASURE_RHUM : getLastResult());
+  return (float) PARAM_BAD_RHT;
+}
+
+
+float gbj_si70::measureHumidity(float &temperature)
+{
+  bool origBusStop = getBusStop();
+  setBusRpte();
+  float humidity = measureHumidity();
+  setBusStopFlag(origBusStop);
+  temperature = readTemperature(CMD_READ_TEMP_FROM_RH);
+  return humidity;
 }
 
 
@@ -423,22 +487,6 @@ uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
     return writeUserRegister();
   }
   return getLastResult();
-}
-
-
-float gbj_si70::readTemperature(uint8_t command)
-{
-  if (busSend(command)) return setLastResult(ERROR_MEASURE_TEMP);
-  wait(getUseValuesTyp() ? getConversionTimeTempTyp() : getConversionTimeTempMax());
-  uint8_t data[3];
-  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_MEASURE_TEMP);
-  uint16_t wordMeasure;
-  wordMeasure = data[0] << 8;   // MSB
-  wordMeasure |= data[1];       // LSB
-  if (command != CMD_READ_TEMP_FROM_RH \
-  && !checkCrc8((uint32_t) wordMeasure, data[2])) return setLastResult(ERROR_MEASURE_TEMP);
-  // Convert measured temperature to centigrade
-  return calculateTemperature(wordMeasure);
 }
 
 

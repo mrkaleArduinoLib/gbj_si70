@@ -165,6 +165,8 @@ void setup()
     }
     errorHandler("Resolution");
   }
+  Serial.println("---");
+  Serial.println("END");
 }
 
 

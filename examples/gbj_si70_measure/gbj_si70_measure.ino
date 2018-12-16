@@ -139,26 +139,20 @@ void setup()
     errorHandler("Resolution");
     return;
   }
-  Serial.println("Humidity (%) / Temperature ('C) / Dewpoint ('C)");
+  Serial.println("Humidity (%) / Temperature ('C)");
 }
 
 
 void loop()
 {
   if (Sensor.isError()) return;
-  rhumValue = Sensor.measureHumidity(&tempValue);
-  if (Sensor.isSuccess())
+  rhumValue = Sensor.measureHumidity(tempValue);
+  if (Sensor.isError())
   {
-    dewpValue = Sensor.calculateDewpoint(rhumValue, tempValue);
-    if (Sensor.isSuccess())
-    {
-      Serial.print(rhumValue);
-      Serial.print(" / ");
-      Serial.print(tempValue);
-      Serial.print(" / ");
-      Serial.println(dewpValue);
-    }
+    errorHandler("Measurement");
   }
-  errorHandler("Measurement");
+  Serial.print(rhumValue);
+  Serial.print(" / ");
+  Serial.println(tempValue);
   delay(PERIOD_MEASURE);
 }

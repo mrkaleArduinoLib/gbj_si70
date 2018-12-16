@@ -5,6 +5,7 @@ Library for the humidity and temperature sensors *SI70xx*, especially **SI7021**
 - The sensor provides the general access address `0x00` as well, but it is not utilized by the library.
 - The library provides measured temperature in degrees of Celsius and relative humidity in percentage.
 - For conversion among various temperature unit scales and for calculating dew point temperature use library **gbjAppHelpers**.
+- At erroneous measurement of relative humidity or temperature the corresponding method returns erroneous value `999.0`.
 
 #### Particle hardware configuration
 - Connect microcontroller's pin `D0` to sensor's pin **SDA** (Serial Data).
@@ -120,6 +121,7 @@ Other error codes as well as result code are inherited from the parent library [
 - [getSerialNumber()](#getSerial)
 - [getVddStatus()](#getVddStatus)
 - [getHoldMasterMode()](#getHoldMasterMode)
+- [getErrorRHT()](#getErrorRHT)
 
 Other possible setters and getters are inherited from the parent library [gbjTwoWire](#dependency) and described there.
 
@@ -234,16 +236,15 @@ The temperature is returned through referenced input parameter.
 
 #### Syntax
     float measureHumidity();
-    float measureHumidity(float *temperature);
+    float measureHumidity(float &temperature);
 
 #### Parameters
-<a id="temperature"></a>
-- **temperature**: Address reference to output variable for measured temperature in centigrade.
-  - *Valid values*: address range specific for a platform
+- **temperature**: Referenced variable for placing a temperature value in centigrade.
+  - *Valid values*: sensor specific
   - *Default value*: none
 
 #### Returns
-- Relative humidity or the error value [gbj\_si70::ERROR\_MEASURE\_RHUM](#errors) with corresponding error code in the library object.
+- Relative humidity or erroneous value returned by [getErrorRHT()](#getErrorRHT). The error code can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
 - Temperature in centigrade in the referenced variable.
 
 #### Example
@@ -253,7 +254,7 @@ float tempValue, rhumValue;
 setup()
 {
     Sensor.begin();
-    rhumValue = Sensor.measureHumidity(&tempValue);
+    rhumValue = Sensor.measureHumidity(tempValue);
     rhumValue = Sensor.measureHumidity();
 }
 ```
@@ -278,7 +279,7 @@ The method measures temperature only without measuring the relative humidity.
 None
 
 #### Returns
-Temperature in centigrade or the error value [gbj\_si70::ERROR\_MEASURE\_TEMP](#errors) with corresponding error code in the library object.
+Temperature in centigrade or erroneous value returned by [getErrorRHT()](#getErrorRHT). The error code can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
 
 #### Example
 ``` cpp
@@ -690,5 +691,27 @@ None
 
 #### Returns
 None
+
+[Back to interface](#interface)
+
+
+<a id="getErrorRHT"></a>
+## getErrorRHT()
+#### Description
+The method return virtually wrong relative humidity or temperature value at erroneous measurement usually at incorrect CRC from the sensor.
+
+#### Syntax
+    float getErrorRHT();
+
+#### Parameters
+None
+
+#### Returns
+Erroneous relative humidity or temperature.
+
+#### See also
+[measureTemperature()](#measureTemperature)
+
+[measureHumidity()](#measureHumidity)
 
 [Back to interface](#interface)

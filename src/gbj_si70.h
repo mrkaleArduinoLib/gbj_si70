@@ -131,37 +131,23 @@ uint8_t writeLockByte();
 
 
 /*
-  Measure relative humidity.
+  Measure relative humidity or retrieve temperature as well.
 
   DESCRIPTION:
-  The method measures relative humidity as well as temperature, but returns
-  the humidity only. The temperature can be returned by another method.
-
-  PARAMETERS: none
-
-  RETURN:
-  Relative humidity in per cents or error code ERROR_MEASURE_RHUM.
-*/
-float measureHumidity();
-
-
-/*
-  Measure relative humidity and retrieve temperature.
-
-  DESCRIPTION:
-  The method is overloaded one. It measures either relative humidity solely or
+  The particular method measures either relative humidity solely or
   temperature on the same time and retrives it through input parameter.
 
   PARAMETERS:
-  temperature - Pointer to a float temperature variable.
-                - Data type: integer
+  temperature - Referenced variable for placing a temperature value.
+                - Data type: float
                 - Default value: none
-                - Limited range: system specific address space
+                - Limited range: sensor specific
   RETURN:
-  Relative humidity in per cents and temperature in centigrades or error code
-  ERROR_MEASURE_RHUM.
+  Relative humidity in per cents and temperature in centigrades or
+  erroneous value PARAM_BAD_RHT. Methods set error code as well.
 */
-float measureHumidity(float *temperature);
+float measureHumidity();
+float measureHumidity(float &temperature);
 
 
 /*
@@ -173,7 +159,8 @@ float measureHumidity(float *temperature);
   PARAMETERS: none
 
   RETURN:
-  Temperature in centigrades or error code ERROR_MEASURE_TEMP.
+  Temperature in centigrades or erroneous value PARAM_BAD_RHT. Methods set
+  error code as well.
 */
 float measureTemperature();
 
@@ -247,15 +234,16 @@ uint8_t setHeaterLevel(uint8_t heaterLevel);
 inline uint32_t getSNA() { return _status.serialSNA; };
 inline uint32_t getSNB() { return _status.serialSNB; };
 uint64_t getSerialNumber();
-inline uint8_t  getFwRevision()  { return _status.fwRevision; };
-inline uint8_t  getDeviceType()  { return (_status.serialSNB >> 24); };
-inline bool  getHoldMasterMode()  { return _status.holdMasterMode; };
+inline uint8_t getFwRevision()  { return _status.fwRevision; };
+inline uint8_t getDeviceType()  { return (_status.serialSNB >> 24); };
+inline bool getHoldMasterMode()  { return _status.holdMasterMode; };
 bool getVddStatus();  // Flag about correct operating voltage
 bool getHeaterEnabled();  // Flag about enabling the sensor's heater
 float getHeaterCurrent();  // Heater current in milliampers
-uint8_t  getHeaterLevel();  // Heater level
-uint8_t  getResolutionTemp();  // Temperature resolution in bits
-uint8_t  getResolutionRhum();  // Relative humidity resolution in bits
+uint8_t getHeaterLevel();  // Heater level
+uint8_t getResolutionTemp();  // Temperature resolution in bits
+uint8_t getResolutionRhum();  // Relative humidity resolution in bits
+inline float getErrorRHT() { return (float) PARAM_BAD_RHT; };
 
 
 private:
@@ -292,6 +280,11 @@ enum Resetting
   RESET_REG_USER = 0x3A,  // Reset Settings = 0011_1010 (datasheet Register 1. User Register 1)
   RESET_REG_HEATER = 0x00,  // Reset Settings = 0000_0000 (datasheet Register 2. Heater Control Register)
 };  // Control registers reset settings
+enum Parameters
+{
+  PARAM_CRC_CHECKS = 3,  // Number of repeating action at wrong CRC
+  PARAM_BAD_RHT = 999,  // Unreasonable wrong relative humidity or temperature value
+};
 
 //------------------------------------------------------------------------------
 // Private attributes

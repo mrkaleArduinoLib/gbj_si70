@@ -42,6 +42,7 @@ getSNB	KEYWORD2
 getSerialNumber	KEYWORD2
 getVddStatus	KEYWORD2
 getHoldMasterMode	KEYWORD2
+getErrorRHT	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

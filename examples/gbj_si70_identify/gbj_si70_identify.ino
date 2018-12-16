@@ -191,8 +191,8 @@ void setup()
   Serial.print("Humidity Resolution: ");
   Serial.print(Sensor.getResolutionRhum());
   Serial.println(" bits");
-  Serial.println(F("---"));
-  Serial.println(F("END"));
+  Serial.println("---");
+  Serial.println("END");
 }
 
 

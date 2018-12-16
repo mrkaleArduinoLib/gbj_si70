@@ -22,7 +22,7 @@
 #include "gbj_si70.h"
 
 gbj_si70 Sensor = gbj_si70();
-// gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_100KHZ, true, D2, D1);
+// gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_100KHZ, D2, D1);
 // gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_400KHZ);
 
 byte resolutionList[4] = {gbj_si70::RESOLUTION_T14_RH12, \
@@ -56,7 +56,7 @@ void errorHandler(String location)
       break;
 
     case gbj_si70::ERROR_NACK_DATA:
-      Serial.println("ERROR_PINS");
+      Serial.println("ERROR_NACK_DATA");
       break;
 
     case gbj_si70::ERROR_NACK_OTHER:

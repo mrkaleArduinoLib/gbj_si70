@@ -76,9 +76,8 @@ enum FirmwareVersion
 /*
   Constructor taken from parent class.
 */
-gbj_si70(uint32_t clockSpeed = CLOCK_100KHZ, bool busStop = true, \
-  uint8_t pinSDA = 4, uint8_t pinSCL = 5) \
-: gbj_twowire(clockSpeed, busStop, pinSDA, pinSCL) {};
+gbj_si70(uint32_t clockSpeed = CLOCK_100KHZ, uint8_t pinSDA = 4, uint8_t pinSCL = 5) \
+: gbj_twowire(clockSpeed, pinSDA, pinSCL) {};
 
 
 /*
@@ -302,9 +301,9 @@ struct
 } _status;
 struct
 {
-  bool enabled;  // Flag about initialization (reading) the user register
-  uint8_t regValue;  // Value of user register 1
-} _user;  // Parameters of user register
+  bool read;  // Flag about initialization (reading) the user register
+  uint8_t value;  // Value of user register 1
+} _userReg;  // Parameters of user register
 struct
 {
   bool enabled;  // Flag about initialization (reading) the heater register

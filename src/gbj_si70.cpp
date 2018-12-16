@@ -133,7 +133,7 @@ bool gbj_si70::getVddStatus()
   // Always read user register, because the voltage status is update after
   // each measurement
   if (readUserRegister()) return false;
-  uint8_t status = (_user.regValue >> 6) & B1;
+  uint8_t status = (_userReg.value >> 6) & B1;
   return (status == 0);
 }
 
@@ -141,12 +141,12 @@ bool gbj_si70::getVddStatus()
 bool gbj_si70::getHeaterEnabled()
 {
   // Read user register if needed
-  if (!_user.enabled)
+  if (!_userReg.read)
   {
     if (readUserRegister()) return false;
   }
   // Separate heater status from HTRE (D2) bit of user register byte
-  uint8_t status = (_user.regValue >> 2) & B1;
+  uint8_t status = (_userReg.value >> 2) & B1;
   return (status == 1);
 }
 
@@ -179,7 +179,7 @@ float gbj_si70::getHeaterCurrent()
 
 uint8_t gbj_si70::getResolutionTemp()
 {
-  if (!_user.enabled)
+  if (!_userReg.read)
   {
     if (readUserRegister()) return getLastResult();
   }
@@ -189,7 +189,7 @@ uint8_t gbj_si70::getResolutionTemp()
 
 uint8_t gbj_si70::getResolutionRhum()
 {
-  if (!_user.enabled)
+  if (!_userReg.read)
   {
     if (readUserRegister()) return getLastResult();
   }
@@ -239,8 +239,8 @@ bool gbj_si70::checkCrc8(uint32_t data, uint8_t crc)
 uint8_t  gbj_si70::resolution()
 {
   // Separate resolution from RES1 (D7) and RES0 (D0) bit of user register byte
-  uint8_t res0 = (_user.regValue >> 0) & B1;
-  uint8_t res1 = (_user.regValue >> 7) & B1;
+  uint8_t res0 = (_userReg.value >> 0) & B1;
+  uint8_t res1 = (_userReg.value >> 7) & B1;
   return (res1 << 1) | res0;
 }
 
@@ -304,16 +304,16 @@ uint8_t gbj_si70::readUserRegister()
   if (busSend(CMD_REG_RHT_READ)) return setLastResult(ERROR_REG_RHT_READ);
   uint8_t data[1];
   if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_REG_RHT_READ);
-  _user.regValue = data[0];
-  _user.enabled = true;
+  _userReg.value = data[0];
+  _userReg.read = true;
   return getLastResult();
 }
 
 
 uint8_t gbj_si70::writeUserRegister()
 {
-  if (busSend(CMD_REG_RHT_WRITE, _user.regValue)) return getLastResult();
-  _user.enabled = false;  // Reread the user register the next time for sure
+  if (busSend(CMD_REG_RHT_WRITE, _userReg.value)) return getLastResult();
+  _userReg.read = false;  // Reread the user register the next time for sure
   return getLastResult();
 }
 
@@ -341,19 +341,19 @@ uint8_t gbj_si70::setHeaterStatus(bool status)
 {
   initLastResult();
   // Read user register if needed
-  if (!_user.enabled)
+  if (!_userReg.read)
   {
     if (readUserRegister()) return getLastResult();
   }
   // Write heater status for HTRE (D2) bit of user register byte if needed
   if (!getHeaterEnabled() && status)
   {
-    _user.regValue |= B00000100;  // Set HTRE to 1
+    _userReg.value |= B00000100;  // Set HTRE to 1
     return writeUserRegister();
   }
   if (getHeaterEnabled() && !status)
   {
-    _user.regValue &= B11111011;  // Set HTRE to 0
+    _userReg.value &= B11111011;  // Set HTRE to 0
     return writeUserRegister();
   }
   return getLastResult();
@@ -364,7 +364,7 @@ uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
 {
   initLastResult();
   // Read user register if needed
-  if (!_user.enabled)
+  if (!_userReg.read)
   {
     if (readUserRegister()) return getLastResult();
   }
@@ -375,19 +375,19 @@ uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
   {
     if (bitRes0)
     {
-      _user.regValue |= B00000001;  // Set RES0 to 1
+      _userReg.value |= B00000001;  // Set RES0 to 1
     }
     else
     {
-      _user.regValue &= B11111110;  // Set RES0 to 0
+      _userReg.value &= B11111110;  // Set RES0 to 0
     }
     if (bitRes1)
     {
-      _user.regValue |= B10000000;  // Set RES1 to 1
+      _userReg.value |= B10000000;  // Set RES1 to 1
     }
     else
     {
-      _user.regValue &= B01111111;  // Set RES1 to 0
+      _userReg.value &= B01111111;  // Set RES1 to 0
     }
     return writeUserRegister();
   }

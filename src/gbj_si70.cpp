@@ -54,7 +54,7 @@ float gbj_si70::readTemperature(uint8_t command)
   bool origBusStop = getBusStop();
   uint8_t data[3];
   uint16_t wordMeasure;
-  for (uint8_t i; i < PARAM_CRC_CHECKS; i++)
+  for (uint8_t i = 0; i < PARAM_CRC_CHECKS; i++)
   {
     if (getHoldMasterMode())
     {
@@ -104,7 +104,7 @@ float gbj_si70::measureHumidity()
   bool origBusStop = getBusStop();
   uint8_t data[3];
   uint16_t wordMeasure;
-  for (uint8_t i; i < PARAM_CRC_CHECKS; i++)
+  for (uint8_t i = 0; i < PARAM_CRC_CHECKS; i++)
   {
     if (getHoldMasterMode())
     {

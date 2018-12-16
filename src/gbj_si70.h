@@ -315,8 +315,8 @@ struct
   // Indexes by resolution bits D7 and D0 value in user register
   uint8_t tempBits[4] = {14, 12, 13, 11};  // List of temperature resolutions in bits
   uint8_t rhumBits[4] = {12,  8, 10, 11};  // List of humidity resolutions in bits
-  uint8_t tempConvTimeMax[4] = {11, 6, 4, 3};  // Maximal conversion times of temperature in milliseconds
-  uint8_t tempConvTimeTyp[4] = { 7, 4, 3, 2};  // Maximal conversion times of temperature in milliseconds
+  uint8_t tempConvTimeMax[4] = {11, 4, 6, 3};  // Maximal conversion times of temperature in milliseconds
+  uint8_t tempConvTimeTyp[4] = { 7, 3, 4, 2};  // Maximal conversion times of temperature in milliseconds
   uint8_t rhumConvTimeMax[4] = {12, 3, 5, 7};  // Maximal conversion times of humidity in milliseconds
   uint8_t rhumConvTimeTyp[4] = {10, 3, 4, 6};  // Maximal conversion times of humidity in milliseconds
 } _resolusion;

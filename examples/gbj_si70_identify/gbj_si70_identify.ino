@@ -192,6 +192,7 @@ void setup()
   Serial.print(Sensor.getResolutionRhum());
   Serial.println(" bits");
   Serial.println(F("---"));
+  Serial.println(F("END"));
 }
 
 

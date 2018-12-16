@@ -28,6 +28,8 @@ setHeaterEnabled	KEYWORD2
 setHeaterDisabled	KEYWORD2
 setHeaterLevel	KEYWORD2
 setHoldMasterMode	KEYWORD2
+setUseValuesTyp	KEYWORD2
+setUseValuesMax	KEYWORD2
 getHeaterEnabled	KEYWORD2
 getHeaterLevel	KEYWORD2
 getHeaterCurrent	KEYWORD2

@@ -104,6 +104,8 @@ Other error codes as well as result code are inherited from the parent library [
 - [setHeaterDisabled()](#setHeater)
 - [setHeaterLevel()](#setHeaterLevel)
 - [setHoldMasterMode()](#setHoldMasterMode)
+- [setUseValuesTyp()](#setUseValues)
+- [setUseValuesMax()](#setUseValues)
 
 #### Getters
 - [getResolutionTemp()](#getResolutionTemp)
@@ -636,5 +638,23 @@ None
 Flag about the correctness of the operating voltage.
 - **true**: The voltage is correct.
 - **false**: The voltage is incorrect.
+
+[Back to interface](#interface)
+
+
+<a id="setUseValues"></a>
+## setUseValuesTyp(), setUseValuesMax()
+#### Description
+The particular method sets the internal flag whether typical or maximal values from the datasheet should be used regarding conversion and reset times.
+
+#### Syntax
+    void setUseValuesTyp();
+    void setUseValuesMax();
+
+#### Parameters
+None
+
+#### Returns
+None
 
 [Back to interface](#interface)

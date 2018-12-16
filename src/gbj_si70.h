@@ -181,6 +181,8 @@ float measureTemperature();
 //------------------------------------------------------------------------------
 // Public setters - they usually return result code.
 //------------------------------------------------------------------------------
+inline void setUseValuesTyp() { _status.useValuesTyp = true; };
+inline void setUseValuesMax() { _status.useValuesTyp = false; };
 inline uint8_t setAddress() { return gbj_twowire::setAddress(ADDRESS); };
 inline uint8_t setHeaterEnabled() { return setHeaterStatus(true); };  // Turn on sensor's heater
 inline uint8_t setHeaterDisabled() { return setHeaterStatus(false); };  // Turn off sensor's heater
@@ -280,8 +282,10 @@ enum Commands
 };
 enum Timing
 {
-  TIMING_RESET = 50,  // Resetting delay
-  TIMING_CONVERSION = 25,  // Time delay needed for measurement conversion in milliseconds
+  TIMING_POWERUP_MAX = 80,
+  TIMING_POWERUP_TYP = 80,
+  TIMING_RESET_MAX = 15,
+  TIMING_RESET_TYP = 5,
 };
 enum Resetting
 {
@@ -298,6 +302,7 @@ struct
   uint32_t serialSNA;  // Upper 4 bytes of serial number
   uint32_t serialSNB;  // Lower 4 bytes of serial number
   bool holdMasterMode;  // Flag about active hold master mode at measuring
+  bool useValuesTyp;  // Flag about using typical values from datasheet
 } _status;
 struct
 {
@@ -314,14 +319,24 @@ struct
 } _heater;  // Parameters for sensor heater
 struct
 {
-  uint8_t temp[4] = {14, 12, 13, 11};  // List of temperature resolutions
-  uint8_t rhum[4] = {12,  8, 10, 11};  // List of humidity resolutions
+  // Indexes by resolution bits D7 and D0 value in user register
+  uint8_t tempBits[4] = {14, 12, 13, 11};  // List of temperature resolutions in bits
+  uint8_t rhumBits[4] = {12,  8, 10, 11};  // List of humidity resolutions in bits
+  uint8_t tempConvTimeMax[4] = {11, 6, 4, 3};  // Maximal conversion times of temperature in milliseconds
+  uint8_t tempConvTimeTyp[4] = { 7, 4, 3, 2};  // Maximal conversion times of temperature in milliseconds
+  uint8_t rhumConvTimeMax[4] = {12, 3, 5, 7};  // Maximal conversion times of humidity in milliseconds
+  uint8_t rhumConvTimeTyp[4] = {10, 3, 4, 6};  // Maximal conversion times of humidity in milliseconds
 } _resolusion;
 
 
 //------------------------------------------------------------------------------
 // Private methods
 //------------------------------------------------------------------------------
+inline bool getUseValuesTyp() { return _status.useValuesTyp; };
+uint8_t getConversionTimeTempMax();
+uint8_t getConversionTimeTempTyp();
+uint8_t getConversionTimeRhumMax();
+uint8_t getConversionTimeRhumTyp();
 
 /*
   Calculate CRC8 checksum for 32-bit integer

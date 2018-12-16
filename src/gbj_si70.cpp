@@ -4,8 +4,11 @@ const String gbj_si70::VERSION = "GBJ_SI70 1.0.0";
 
 uint8_t gbj_si70::begin(bool holdMasterMode)
 {
+  if (gbj_twowire::begin()) return getLastResult();
+  _userReg.value = 0;
   _status.holdMasterMode = holdMasterMode;
   if (setAddress()) return getLastResult();
+  setUseValuesMax();
   if (reset()) return getLastResult();
   if (readFwRevision()) return getLastResult();
   if (readSerialNumber()) return getLastResult();
@@ -16,18 +19,11 @@ uint8_t gbj_si70::begin(bool holdMasterMode)
 uint8_t gbj_si70::reset()
 {
   if (busSend(CMD_RESET)) return getLastResult();
-  wait(TIMING_RESET);  // Wait for resetting
+  wait(getUseValuesTyp() ? TIMING_RESET_TYP : TIMING_RESET_MAX);
+  // Check user register 1 reset value
+  if (readUserRegister()) return getLastResult();
+  if (_userReg.value != RESET_REG_USER) return setLastResult(ERROR_RESET);
   if (setHeaterDisabled()) return getLastResult(); // Turn off heater
-
-  // Send command to read control user register 1
-  if (busSend(CMD_REG_RHT_READ)) return getLastResult();
-
-  // Read control user register's reset settings value
-  uint8_t data[1];
-  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return getLastResult();
-
-  // Validate reset settings
-  if (data[0] != RESET_REG_USER) return setLastResult(ERROR_RESET);
   return getLastResult();
 }
 
@@ -45,7 +41,7 @@ float gbj_si70::measureHumidity()
   if (_status.holdMasterMode && busSend(CMD_MEASURE_RH_HOLD)) return setLastResult(ERROR_MEASURE_RHUM);
   if (!_status.holdMasterMode && busSend(CMD_MEASURE_RH_NOHOLD)) return setLastResult(ERROR_MEASURE_RHUM);
   // Read measuring and checksum bytes
-  wait(TIMING_CONVERSION);
+  wait(getUseValuesTyp() ? getConversionTimeRhumTyp() : getConversionTimeRhumMax());
   uint8_t data[3];
   if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_MEASURE_RHUM);
   uint16_t wordMeasure;
@@ -177,26 +173,6 @@ float gbj_si70::getHeaterCurrent()
 }
 
 
-uint8_t gbj_si70::getResolutionTemp()
-{
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
-  return _resolusion.temp[resolution()];
-}
-
-
-uint8_t gbj_si70::getResolutionRhum()
-{
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
-  return _resolusion.rhum[resolution()];
-}
-
-
 uint64_t gbj_si70::getSerialNumber()
 {
   uint64_t serial;
@@ -207,10 +183,69 @@ uint64_t gbj_si70::getSerialNumber()
 }
 
 
-//------------------------------------------------------------------------------
-// Private methods
-//------------------------------------------------------------------------------
+uint8_t gbj_si70::getResolutionTemp()
+{
+  if (!_userReg.read)
+  {
+    if (readUserRegister()) return getLastResult();
+  }
+  return _resolusion.tempBits[resolution()];
+}
 
+
+uint8_t gbj_si70::getConversionTimeTempMax()
+{
+  if (!_userReg.read)
+  {
+    if (readUserRegister()) return getLastResult();
+  }
+  return _resolusion.tempConvTimeMax[resolution()];
+}
+
+
+uint8_t gbj_si70::getConversionTimeTempTyp()
+{
+  if (!_userReg.read)
+  {
+    if (readUserRegister()) return getLastResult();
+  }
+  return _resolusion.tempConvTimeTyp[resolution()];
+}
+
+
+uint8_t gbj_si70::getResolutionRhum()
+{
+  if (!_userReg.read)
+  {
+    if (readUserRegister()) return getLastResult();
+  }
+  return _resolusion.rhumBits[resolution()];
+}
+
+
+uint8_t gbj_si70::getConversionTimeRhumMax()
+{
+  if (!_userReg.read)
+  {
+    if (readUserRegister()) return getLastResult();
+  }
+  return _resolusion.rhumConvTimeMax[resolution()];
+}
+
+
+uint8_t gbj_si70::getConversionTimeRhumTyp()
+{
+  if (!_userReg.read)
+  {
+    if (readUserRegister()) return getLastResult();
+  }
+  return _resolusion.rhumConvTimeTyp[resolution()];
+}
+
+
+//------------------------------------------------------------------------------
+// Auxilliary methods
+//------------------------------------------------------------------------------
 // Calculate checksum
 uint8_t gbj_si70::crc8(uint32_t data)
 {
@@ -303,7 +338,7 @@ uint8_t gbj_si70::readUserRegister()
 {
   if (busSend(CMD_REG_RHT_READ)) return setLastResult(ERROR_REG_RHT_READ);
   uint8_t data[1];
-  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_REG_RHT_READ);
+  if (busReceive(data, 1)) return setLastResult(ERROR_REG_RHT_READ);
   _userReg.value = data[0];
   _userReg.read = true;
   return getLastResult();
@@ -322,7 +357,7 @@ uint8_t gbj_si70::readHeaterRegister()
 {
   if (busSend(CMD_REG_HEATER_READ)) return setLastResult(ERROR_REG_HEATER_READ);
   uint8_t data[1];
-  if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_REG_HEATER_READ);
+  if (busReceive(data, 1)) return setLastResult(ERROR_REG_HEATER_READ);
   _heater.regValue = data[0];
   _heater.enabled = true;
   return getLastResult();
@@ -398,7 +433,7 @@ uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
 float gbj_si70::readTemperature(uint8_t command)
 {
   if (busSend(command)) return setLastResult(ERROR_MEASURE_TEMP);
-  wait(TIMING_CONVERSION);
+  wait(getUseValuesTyp() ? getConversionTimeTempTyp() : getConversionTimeTempMax());
   uint8_t data[3];
   if (busReceive(data, sizeof(data)/sizeof(data[0]))) return setLastResult(ERROR_MEASURE_TEMP);
   uint16_t wordMeasure;

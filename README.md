@@ -132,21 +132,13 @@ The library does not need special constructor and destructor, so that the inheri
 - All the constructor parameters can be changed dynamically with corresponding setters later in a sketch.
 
 #### Syntax
-    gbj_si70(uint32_t clockSpeed, bool busStop, uint8_t pinSDA, uint8_t pinSCL);
+    gbj_si70(uint32_t clockSpeed, uint8_t pinSDA, uint8_t pinSCL);
 
 #### Parameters
 <a id="prm_busClock"></a>
 - **clockSpeed**: Two-wire bus clock frequency in Hertz. If the clock is not from enumeration, it fallbacks to 100 kHz.
   - *Valid values*: gbj\_si70::CLOCK\_100KHZ, gbj\_si70::CLOCK\_400KHZ
   - *Default value*: gbj\_si70::CLOCK\_100KHZ
-
-
-<a id="prm_busStop"></a>
-- **busStop**: Logical flag about releasing bus after end of transmission.
-  - *Valid values*: true, false
-    - **true**: Releases the bus after data transmission and enables other master devices to control the bus.
-    - **false**: Keeps connection to the bus and enables to begin further data transmission immediately.
-  - *Default value*: true
 
 
 <a id="prm_pinSDA"></a>
@@ -169,7 +161,7 @@ The method has all arguments defaulted and calling without any parameters is equ
 
 ```cpp
   gbj_si70 Sensor = gbj_si70(); // It is equivalent to
-  gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_100KHZ, true, D2, D1);
+  gbj_si70 Sensor = gbj_si70(gbj_si70::CLOCK_100KHZ, D2, D1);
 ```
 
 [Back to interface](#interface)
@@ -186,7 +178,7 @@ The method takes, sanitizes, and stores sensor parameters to a class instance ob
     uint8_t begin(bool holdMasterMode);
 
 #### Parameters
-<a id="holdMasterMode"></a>
+<a id="prm_holdMasterMode"></a>
 - **holdMasterMode**: Logical flag about blocking (holding) serial clock line during measurement. At no holding master mode other communication on the bus can be performed.
   - *Valid values*: true, false
   - *Default value*: true
@@ -638,6 +630,48 @@ None
 Flag about the correctness of the operating voltage.
 - **true**: The voltage is correct.
 - **false**: The voltage is incorrect.
+
+[Back to interface](#interface)
+
+
+<a id="setHoldMasterMode"></a>
+## setHoldMasterMode()
+#### Description
+The method sets internal flag about particular measuring hold master mode.
+
+#### Syntax
+    void setHoldMasterMode(bool holdMasterMode);
+
+#### Parameters
+- **holdMasterMode**: See the same [parameter](#prm_holdMasterMode) in the method [begin()](#begin).
+
+#### Returns
+None
+
+#### See also
+[begin()](#begin)
+
+[getHoldMasterMode()](#getHoldMasterMode)
+
+[Back to interface](#interface)
+
+
+<a id="getHoldMasterMode"></a>
+## getHoldMasterMode()
+#### Description
+The method sets internal flag about particular measuring hold master mode.
+
+#### Syntax
+    bool getHoldMasterMode();
+
+#### Parameters
+None
+
+#### Returns
+Current flag about measuring hold master mode.
+
+#### See also
+[setHoldMasterMode()](#setHoldMasterMode)
 
 [Back to interface](#interface)
 

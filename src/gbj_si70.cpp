@@ -6,9 +6,9 @@ uint8_t gbj_si70::begin(bool holdMasterMode)
 {
   if (gbj_twowire::begin()) return getLastResult();
   _userReg.value = 0;
-  _status.holdMasterMode = holdMasterMode;
   if (setAddress()) return getLastResult();
   setUseValuesMax();
+  setHoldMasterMode(holdMasterMode);
   if (reset()) return getLastResult();
   if (readFwRevision()) return getLastResult();
   if (readSerialNumber()) return getLastResult();
@@ -38,8 +38,8 @@ uint8_t gbj_si70::writeLockByte()
 
 float gbj_si70::measureHumidity()
 {
-  if (_status.holdMasterMode && busSend(CMD_MEASURE_RH_HOLD)) return setLastResult(ERROR_MEASURE_RHUM);
-  if (!_status.holdMasterMode && busSend(CMD_MEASURE_RH_NOHOLD)) return setLastResult(ERROR_MEASURE_RHUM);
+  if (getHoldMasterMode() && busSend(CMD_MEASURE_RH_HOLD)) return setLastResult(ERROR_MEASURE_RHUM);
+  if (!getHoldMasterMode() && busSend(CMD_MEASURE_RH_NOHOLD)) return setLastResult(ERROR_MEASURE_RHUM);
   // Read measuring and checksum bytes
   wait(getUseValuesTyp() ? getConversionTimeRhumTyp() : getConversionTimeRhumMax());
   uint8_t data[3];
@@ -63,7 +63,7 @@ float gbj_si70::measureHumidity(float *temperature)
 
 float gbj_si70::measureTemperature()
 {
-  if (_status.holdMasterMode)
+  if (getHoldMasterMode())
   {
     return readTemperature(CMD_MEASURE_TEMP_HOLD);
   }

@@ -142,10 +142,7 @@ bool gbj_si70::getVddStatus()
 
 bool gbj_si70::getHeaterEnabled()
 {
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return false;
-  }
+  if (reloadUserRegister()) return false;
   // Separate heater status from HTRE (D2) bit of user register byte
   uint8_t status = (_userReg.value >> 2) & B1;
   return (status == 1);
@@ -190,60 +187,42 @@ uint64_t gbj_si70::getSerialNumber()
 
 uint8_t gbj_si70::getResolutionTemp()
 {
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   return _resolusion.tempBits[resolution()];
 }
 
 
 uint8_t gbj_si70::getConversionTimeTempMax()
 {
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   return _resolusion.tempConvTimeMax[resolution()];
 }
 
 
 uint8_t gbj_si70::getConversionTimeTempTyp()
 {
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   return _resolusion.tempConvTimeTyp[resolution()];
 }
 
 
 uint8_t gbj_si70::getResolutionRhum()
 {
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   return _resolusion.rhumBits[resolution()];
 }
 
 
 uint8_t gbj_si70::getConversionTimeRhumMax()
 {
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   return _resolusion.rhumConvTimeMax[resolution()];
 }
 
 
 uint8_t gbj_si70::getConversionTimeRhumTyp()
 {
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   return _resolusion.rhumConvTimeTyp[resolution()];
 }
 
@@ -345,6 +324,14 @@ uint8_t gbj_si70::readSerialNumber()
 }
 
 
+uint8_t gbj_si70::writeUserRegister()
+{
+  if (busSend(CMD_REG_RHT_WRITE, _userReg.value)) return getLastResult();
+  _userReg.read = false;  // Reread the user register the next time for sure
+  return getLastResult();
+}
+
+
 uint8_t gbj_si70::readUserRegister()
 {
   bool origBusStop = getBusStop();
@@ -359,11 +346,13 @@ uint8_t gbj_si70::readUserRegister()
 }
 
 
-uint8_t gbj_si70::writeUserRegister()
+uint8_t gbj_si70::reloadUserRegister()
 {
-  if (busSend(CMD_REG_RHT_WRITE, _userReg.value)) return getLastResult();
-  _userReg.read = false;  // Reread the user register the next time for sure
-  return getLastResult();
+  if (!_userReg.read)
+  {
+    return readUserRegister();
+  }
+   return getLastResult();
 }
 
 
@@ -391,11 +380,7 @@ uint8_t gbj_si70::writeHeaterRegister()
 
 uint8_t gbj_si70::setHeaterStatus(bool status)
 {
-  // Read user register if needed
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   // Write heater status for HTRE (D2) bit of user register byte if needed
   if (!getHeaterEnabled() && status)
   {
@@ -413,11 +398,7 @@ uint8_t gbj_si70::setHeaterStatus(bool status)
 
 uint8_t gbj_si70::setBitResolution(bool bitRes1, bool bitRes0)
 {
-  // Read user register if needed
-  if (!_userReg.read)
-  {
-    if (readUserRegister()) return getLastResult();
-  }
+  if (reloadUserRegister()) return false;
   // Determine resolution code
   uint8_t code = ((bitRes1 ? B1 : B0) << 1) | (bitRes0 ? B1 : B0);
   // Write resolution bits RES1 (D7) and RES0 (D0) to user register byte if needed

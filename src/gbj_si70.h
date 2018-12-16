@@ -458,6 +458,20 @@ uint8_t readUserRegister();
 
 
 /*
+  Read user register if needed.
+
+  DESCRIPTION:
+  The method reads the user register if internal flag is reset.
+
+  PARAMETERS: none
+
+  RETURN:
+  Result code.
+*/
+uint8_t reloadUserRegister();
+
+
+/*
   Write user register.
 
   DESCRIPTION:

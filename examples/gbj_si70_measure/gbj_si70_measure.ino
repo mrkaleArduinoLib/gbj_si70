@@ -149,7 +149,6 @@ void setup()
 
 void loop()
 {
-  if (Sensor.isError()) return;
   rhumValue = Sensor.measureHumidity(tempValue);
   if (Sensor.isError())
   {

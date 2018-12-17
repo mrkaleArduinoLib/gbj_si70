@@ -144,12 +144,11 @@ void setup()
 
 void loop()
 {
-  if (Sensor.isError()) return;
   tempValue = Sensor.measureTemperature();
-  if (Sensor.isSuccess())
+  if (Sensor.isError())
   {
-    Serial.println(tempValue);
+    errorHandler("Measurement");
   }
-  errorHandler("Measurement");
+  Serial.println(tempValue);
   delay(PERIOD_MEASURE);
 }

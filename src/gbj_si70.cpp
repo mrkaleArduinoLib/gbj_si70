@@ -251,43 +251,49 @@ uint64_t gbj_si70::getSerialNumber()
 
 uint8_t gbj_si70::getResolutionTemp()
 {
-  if (reloadUserRegister()) return false;
-  return _resolusion.tempBits[resolution()];
+  uint8_t resIdx = resolution();
+  if (reloadUserRegister()) resIdx = 0;
+  return _resolusion.tempBits[resIdx];
 }
 
 
 uint8_t gbj_si70::getConversionTimeTempMax()
 {
-  if (reloadUserRegister()) return false;
-  return _resolusion.tempConvTimeMax[resolution()];
+  uint8_t resIdx = resolution();
+  if (reloadUserRegister()) resIdx = 0;
+  return _resolusion.tempConvTimeMax[resIdx];
 }
 
 
 uint8_t gbj_si70::getConversionTimeTempTyp()
 {
-  if (reloadUserRegister()) return false;
-  return _resolusion.tempConvTimeTyp[resolution()];
+  uint8_t resIdx = resolution();
+  if (reloadUserRegister()) resIdx = 0;
+  return _resolusion.tempConvTimeTyp[resIdx];
 }
 
 
 uint8_t gbj_si70::getResolutionRhum()
 {
-  if (reloadUserRegister()) return false;
-  return _resolusion.rhumBits[resolution()];
+  uint8_t resIdx = resolution();
+  if (reloadUserRegister()) resIdx = 0;
+  return _resolusion.rhumBits[resIdx];
 }
 
 
 uint8_t gbj_si70::getConversionTimeRhumMax()
 {
-  if (reloadUserRegister()) return false;
-  return _resolusion.rhumConvTimeMax[resolution()];
+  uint8_t resIdx = resolution();
+  if (reloadUserRegister()) resIdx = 0;
+  return _resolusion.rhumConvTimeMax[resIdx];
 }
 
 
 uint8_t gbj_si70::getConversionTimeRhumTyp()
 {
-  if (reloadUserRegister()) return false;
-  return _resolusion.rhumConvTimeTyp[resolution()];
+  uint8_t resIdx = resolution();
+  if (reloadUserRegister()) resIdx = 0;
+  return _resolusion.rhumConvTimeTyp[resIdx];
 }
 
 

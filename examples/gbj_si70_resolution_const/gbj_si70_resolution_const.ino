@@ -17,7 +17,7 @@
   CREDENTIALS:
   Author: Libor Gabaj
 */
-#define SKETCH "GBJ_SI70_RESOLUTION_CONST 1.0.0"
+#define SKETCH "GBJ_SI70_RESOLUTION_CONST 1.1.0"
 
 #include "gbj_si70.h"
 
@@ -49,7 +49,7 @@ void errorHandler(String location)
       Serial.println("ERROR_PINS");
       break;
 
-    case gbj_htu21::ERROR_RCV_DATA:
+    case gbj_si70::ERROR_RCV_DATA:
       Serial.println("ERROR_RCV_DATA");
       break;
 

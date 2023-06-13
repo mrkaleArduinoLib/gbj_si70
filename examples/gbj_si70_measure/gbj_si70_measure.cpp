@@ -55,6 +55,21 @@ void setup()
 
 void loop()
 {
+  rhumValue = sensor.measureHumidity();
+  if (sensor.isError())
+  {
+    errorHandler("Humidity");
+  }
+  tempValue = sensor.measureTemperature();
+  if (sensor.isError())
+  {
+    errorHandler("Temperature");
+  }
+  Serial.print(rhumValue);
+  Serial.print(" / ");
+  Serial.print(tempValue);
+  Serial.println(" :: separated");
+  // Combined measurement
   rhumValue = sensor.measureHumidity(tempValue);
   if (sensor.isError())
   {
@@ -62,6 +77,8 @@ void loop()
   }
   Serial.print(rhumValue);
   Serial.print(" / ");
-  Serial.println(tempValue);
+  Serial.print(tempValue);
+  Serial.println(" :: combined");
+  Serial.println();
   delay(PERIOD_MEASURE);
 }

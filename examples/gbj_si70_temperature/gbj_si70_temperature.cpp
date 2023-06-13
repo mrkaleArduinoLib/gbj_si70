@@ -45,7 +45,7 @@ void setup()
     errorHandler("Begin");
     return;
   }
-  Serial.println("Temperature ('C)");
+  Serial.println("Temperature (°C)");
 }
 
 void loop()
@@ -53,7 +53,7 @@ void loop()
   tempValue = sensor.measureTemperature();
   if (sensor.isError())
   {
-    errorHandler("Measurement");
+    errorHandler("Temperature");
   }
   Serial.println(tempValue);
   delay(PERIOD_MEASURE);

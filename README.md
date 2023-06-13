@@ -41,12 +41,6 @@ Library for the humidity and temperature sensors _SI70xx_, especially `SI7021` w
 The library does not have specific error codes. Error codes as well as result code are inherited from the parent library [gbjTwoWire](#dependency) only. The result code and error codes can be tested in the operational code with its method `getLastResult()`, `isError()` or `isSuccess()`.
 
 
-<a id="addresses"></a>
-
-#### Sensor addresses
-* **Addresses::ADDRESS**: Sensor's address.
-
-
 <a id="type"></a>
 
 #### Identification codes
@@ -55,15 +49,6 @@ The library does not have specific error codes. Error codes as well as result co
 * **DeviceTypes::TYPE\_7013**: Sensor type `Si7013`.
 * **DeviceTypes::TYPE\_7020**: Sensor type `Si7020`.
 * **DeviceTypes::TYPE\_7021**: Sensor type `Si7021`.
-
-
-<a id="resolution"></a>
-
-#### Measurement resolutions
-* **Resolutions::RESOLUTION\_T14\_RH12**: Resolution of `temperature 14 bits`, relative `humidity 12 bits`.
-* **Resolutions::RESOLUTION\_T13\_RH10**: Resolution of `temperature 13 bits`, relative `humidity 10 bits`.
-* **Resolutions::RESOLUTION\_T12\_RH8**: Resolution of `temperature 12 bits`, relative `humidity 8 bits`.
-* **Resolutions::RESOLUTION\_T11\_RH11**: Resolution of `temperature 11 bits`, relative `humidity 11 bits`.
 
 
 <a id="firmware"></a>
@@ -75,8 +60,8 @@ The library does not have specific error codes. Error codes as well as result co
 
 ### Referencing constants
 In a sketch the constants can be referenced in following forms:
-* **Static constant** in the form `gbj_si70::<enumeration>::<constant>` or shortly `gbj_si70::<constant>`, e.g., _gbj_si70::Addresses::ADDRESS_ or _gbj_si70::ADDRESS_.
-* **Instance constant** in the form `<object>.<constant>`, e.g., _sensor.ADDRESS_.
+* **Static constant** in the form `gbj_si70::<enumeration>::<constant>` or shortly `gbj_si70::<constant>`, e.g., _gbj_si70::DeviceTypes::TYPE\_7021_ or _gbj_si70::TYPE\_7021_.
+* **Instance constant** in the form `<object>.<constant>`, e.g., _sensor.TYPE\_7021_.
 ```cpp
 gbj_si70 sensor = gbj_si70(sensor.CLOCK_400KHZ);
 ```
@@ -95,7 +80,6 @@ gbj_si70 sensor = gbj_si70(sensor.CLOCK_400KHZ);
 * [writeLockByte()](#writeLockByte)
 
 #### Setters
-* [setResolution()](#setResolution)
 * [setResolutionTemp14()](#setResolutionTemp)
 * [setResolutionTemp13()](#setResolutionTemp)
 * [setResolutionTemp12()](#setResolutionTemp)
@@ -251,7 +235,7 @@ The method is overloaded and measures either relative humidity alongside with te
   * *Default value*: none
 
 #### Returns
-* Relative humidity or erroneous value returned by [getErrorRHT()](#getErrorRHT).
+* Relative humidity truncated to range 0 - 100 °C or erroneous value returned by [getErrorRHT()](#getErrorRHT).
 
 #### Example
 ``` cpp
@@ -308,34 +292,6 @@ setup()
 [Back to interface](#interface)
 
 
-<a id="setResolution"></a>
-
-## setResolution()
-
-#### Description
-The method sets the bit resolution by input parameter, which should be appropriate library [constant](#resolution).
-The resolution is determined by that constant but in fact it is the bit resolution for temperature.
-
-#### Syntax
-    ResultCodes setResolution(Resolutions resolution)
-
-#### Parameters
-<a id="resolution"></a>
-* **resolution**: Desired measurement resolution in bits.
-  * *Valid values*:  [Resolutions::RESOLUTION\_T14\_RH12](#resolution), [Resolutions::RESOLUTION\_T13\_RH10](#resolution),  [Resolutions::RESOLUTION\_T12\_RH8](#resolution), or [Resolutions::RESOLUTION\_T11\_RH11](#resolution)
-  * *Default value*: [Resolutions::RESOLUTION\_T14\_RH12](#resolution)
-
-#### Returns
-Some of [result or error codes](#constants).
-
-#### See also
-[setResolutionTemp11(), setResolutionTemp12(), setResolutionTemp13(), setResolutionTemp14()](#setResolutionTemp)
-
-[setResolutionRhum8(), setResolutionRhum10(), setResolutionRhum11(), setResolutionRhum12()](#setResolutionRhum)
-
-[Back to interface](#interface)
-
-
 <a id="setResolutionTemp"></a>
 
 ## setResolutionTemp11(), setResolutionTemp12(), setResolutionTemp13(), setResolutionTemp14()
@@ -364,8 +320,6 @@ None
 Some of [result or error codes](#constants).
 
 #### See also
-[setResolution()](#setResolution)
-
 [getResolutionTemp()](#getResolutionTemp)
 
 [Back to interface](#interface)
@@ -388,8 +342,6 @@ None
 Bit resolution (11, 12, 13, or 14) or some of [error codes](#errors).
 
 #### See also
-[setResolution()](#setResolution)
-
 [setResolutionTemp11(), setResolutionTemp12(), setResolutionTemp13(), setResolutionTemp14()](#setResolutionTemp)
 
 [Back to interface](#interface)
@@ -422,9 +374,6 @@ None
 #### Returns
 Some of [result or error codes](#constants).
 
-#### See also
-[setResolution()](#setResolution)
-
 [Back to interface](#interface)
 
 
@@ -445,8 +394,6 @@ None
 Bit resolution (8, 10, 11, or 12) or some of [error codes](#errors).
 
 #### See also
-[setResolution()](#setResolution)
-
 [setResolutionRhum8(), setResolutionRhum10(), setResolutionRhum11(), setResolutionRhum12()](#setResolutionRhum)
 
 [Back to interface](#interface)

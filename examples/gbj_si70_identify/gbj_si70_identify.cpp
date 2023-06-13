@@ -84,7 +84,7 @@ void setup()
   // Serial number
   char text[30];
   snprintf(
-    text, 30, "0x%08lx-%08lx", (long)sensor.getSNA(), (long)sensor.getSNB());
+    text, 30, "%08lx-%08lx", (long)sensor.getSNA(), (long)sensor.getSNB());
   Serial.print("Serial Number (SNA-SNB): ");
   Serial.println(text);
   // Vdd status

@@ -23,11 +23,6 @@
 class gbj_si70 : public gbj_twowire
 {
 public:
-  enum Addresses
-  {
-    // Hardware address
-    ADDRESS = 0x40,
-  };
   enum DeviceTypes : uint8_t
   {
     // Engineering samples
@@ -40,14 +35,6 @@ public:
     TYPE_7020 = 0x14,
     // SI70
     TYPE_7021 = 0x15,
-  };
-  // Resolution in bits
-  enum Resolutions : uint8_t
-  {
-    RESOLUTION_T14_RH12 = 14,
-    RESOLUTION_T13_RH10 = 13,
-    RESOLUTION_T12_RH8 = 12,
-    RESOLUTION_T11_RH11 = 11,
   };
   enum FirmwareVersions : uint8_t
   {
@@ -176,7 +163,7 @@ public:
 
     DESCRIPTION:
     The particular method measures either relative humidity solely or
-    temperature on the same time and retrives it through input parameter.
+    temperature on the same time and retrieves it through input parameter.
 
     PARAMETERS:
     temperature - Referenced variable for placing a temperature value.
@@ -185,7 +172,7 @@ public:
       - Limited range: sensor specific
 
     RETURN: Relative humidity in per cents and temperature in centigrades or
-    erroneous value PARAM_BAD_RHT. Methods set error code as well.
+    bad measure value. Methods set error code as well.
   */
   float measureHumidity();
   inline float measureHumidity(float &temperature)
@@ -219,11 +206,15 @@ public:
   // Setters
   inline void setUseValuesTyp() { _status.useValuesTyp = true; }
   inline void setUseValuesMax() { _status.useValuesTyp = false; };
-  inline ResultCodes setAddress() { return gbj_twowire::setAddress(ADDRESS); }
+  inline ResultCodes setAddress()
+  {
+    return gbj_twowire::setAddress(Addresses::ADDRESS);
+  }
   // Turn on sensor's heater
   inline ResultCodes setHeaterEnabled() { return setHeaterStatus(true); }
   // Turn off sensor's heater
   inline ResultCodes setHeaterDisabled() { return setHeaterStatus(false); }
+  // Set resolution
   inline ResultCodes setResolutionTemp14()
   {
     return setBitResolution(false, false);
@@ -248,47 +239,6 @@ public:
   inline void setHoldMasterMode(bool holdMasterMode)
   {
     _status.holdMasterMode = holdMasterMode;
-  }
-
-  /*
-    Set measurement resolution for temperature and relative humidity at once.
-
-    DESCRIPTION:
-    The method sets the bit resolution by input parameter.
-    The resolution is determined by corresponding constant but in fact it is
-    the bit resolution for temperature.
-
-    PARAMETERS:
-    resolution  - Desired measurement resolution.
-      - Data type: non-negative integer
-      - Default value: Resolutions::RESOLUTION_T14_RH12
-      - Limited range: Resolutions::RESOLUTION_T11_RH11 ~ RESOLUTION_T14_RH12
-
-    RETURN: Result code
-  */
-  inline ResultCodes setResolution(
-    Resolutions resolution = Resolutions::RESOLUTION_T14_RH12)
-  {
-    setLastResult();
-    switch (resolution)
-    {
-      case Resolutions::RESOLUTION_T11_RH11:
-        setResolutionTemp11();
-        break;
-
-      case Resolutions::RESOLUTION_T12_RH8:
-        setResolutionTemp12();
-        break;
-
-      case Resolutions::RESOLUTION_T13_RH10:
-        setResolutionTemp13();
-        break;
-
-      default:
-        setResolutionTemp14();
-        break;
-    }
-    return getLastResult();
   }
 
   /*
@@ -398,23 +348,29 @@ public:
   inline uint8_t getResolutionTemp()
   {
     uint8_t resIdx = resolution();
-    return _resolusion.tempBits[isSuccess() ? resIdx : 0];
+    return _resolusion.tempBits[isSuccess(reloadUserRegister()) ? resIdx : 0];
   }
 
   // Relative humidity resolution in bits
   inline uint8_t getResolutionRhum()
   {
     uint8_t resIdx = resolution();
-    return _resolusion.rhumBits[isSuccess() ? resIdx : 0];
+    return _resolusion.rhumBits[isSuccess(reloadUserRegister()) ? resIdx : 0];
   }
 
+  // Bad measurement value
   inline float getErrorRHT()
   {
     return static_cast<float>(Params::PARAM_BAD_RHT);
   }
 
 private:
-  enum Commands
+  enum Addresses
+  {
+    // Hardware address
+    ADDRESS = 0x40,
+  };
+  enum Commands : uint16_t
   {
     // Measure Relative Humidity, Hold Master Mode
     CMD_MEASURE_RH_HOLD = 0xE5,
@@ -445,7 +401,15 @@ private:
     CMD_LOCK_BYTE_WRITE = 0xC556,
     CMD_LOCK_BYTE_VALUE = 0x00,
   };
-  enum Timing
+  // Resolutions in bits
+  enum Resolutions : uint8_t
+  {
+    RESOLUTION_T14_RH12 = 14,
+    RESOLUTION_T13_RH10 = 13,
+    RESOLUTION_T12_RH8 = 12,
+    RESOLUTION_T11_RH11 = 11,
+  };
+  enum Timing : uint8_t
   {
     TIMING_POWERUP_MAX = 80,
     TIMING_POWERUP_TYP = 80,
@@ -453,7 +417,7 @@ private:
     TIMING_RESET_TYP = 5,
   };
   // Control registers reset settings
-  enum Resetting
+  enum Resetting : uint8_t
   {
     // Reset Settings = 0011_1010 (datasheet Register 1. User Register 1)
     RESET_REG_USER = 0x3A,
@@ -484,8 +448,10 @@ private:
   // Parameters of user register
   struct UserReg
   {
-    bool read; // Flag about initialization (reading) the user register
-    uint8_t value; // Value of user register 1
+    // Flag about initialization (reading) the user register
+    bool read;
+    // Value of user register 1
+    uint8_t value;
   } _userReg;
   // Params for sensor heater
   struct Heater
@@ -784,7 +750,7 @@ private:
   */
   inline ResultCodes writeUserRegister()
   {
-    if (isError(busSend(CMD_REG_RHT_WRITE, _userReg.value)))
+    if (isError(busSend(Commands::CMD_REG_RHT_WRITE, _userReg.value)))
     {
       return getLastResult();
     }
@@ -945,7 +911,7 @@ private:
     Measure or retrieve temperature.
 
     DESCRIPTION:
-    The method measures or retrives temperature from the sensor.
+    The method measures or retrieves temperature from the sensor.
 
     PARAMETERS:
     command - Reading command for the temperature.
@@ -953,7 +919,7 @@ private:
       - Default value: none
       - Limited range: 0x00 ~ 0xFF
 
-    RETURN: Temperature in centigrade or error code ERROR_MEASURE_TEMP.
+    RETURN: Temperature in centigrade or bad measurement value.
   */
   float readTemperature(Commands command);
 
@@ -994,7 +960,7 @@ private:
       - Default value: none
       - Limited range: 0x0000 ~ 0xFFFF
 
-    RETURN: Relative humidity in per-cents.
+    RETURN: Relative humidity in per-cents truncated to range 0 - 100 °C.
   */
   inline float calculateHumidity(uint16_t wordMeasure)
   {
@@ -1002,7 +968,7 @@ private:
     humidity *= 125.0;
     humidity /= 65536.0;
     humidity -= 6.0;
-    return humidity;
+    return constrain(humidity, 0.0, 100.0);
   }
 };
 

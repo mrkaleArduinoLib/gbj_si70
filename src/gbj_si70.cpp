@@ -2,7 +2,6 @@
 
 float gbj_si70::readTemperature(Commands command)
 {
-  bool origBusStop = getBusStop();
   uint8_t data[3];
   uint16_t wordMeasure;
   for (uint8_t i = 0; i < Params::PARAM_CRC_CHECKS; i++)
@@ -18,13 +17,7 @@ float gbj_si70::readTemperature(Commands command)
     {
       uint32_t waitNACK = (getUseValuesTyp() ? getConversionTimeTempTyp()
                                              : getConversionTimeTempMax());
-      setBusRepeat();
-      if (isError(busSend(command)))
-      {
-        break;
-      }
-      setBusStopFlag(origBusStop);
-      while (busReceive(data, sizeof(data) / sizeof(data[0])) ==
+      while (busReceive(command, data, sizeof(data) / sizeof(data[0])) ==
              ResultCodes::ERROR_RCV_DATA)
       {
         wait(waitNACK);
@@ -36,6 +29,7 @@ float gbj_si70::readTemperature(Commands command)
     }
     wordMeasure = data[0] << 8;
     wordMeasure |= data[1];
+    // Test status bits (last 2 from LSB) and CRC
     if ((wordMeasure & B11) == B00 &&
         (command == Commands::CMD_READ_TEMP_FROM_RH
            ? true
@@ -81,6 +75,7 @@ float gbj_si70::measureHumidity()
     }
     wordMeasure = data[0] << 8;
     wordMeasure |= data[1];
+    // Test status bits (last 2 from LSB) and CRC
     if ((wordMeasure & B11) == B10 &&
         checkCrc8(static_cast<uint32_t>(wordMeasure), data[2]))
     {

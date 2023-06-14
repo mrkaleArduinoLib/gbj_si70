@@ -29,7 +29,7 @@ Library for the humidity and temperature sensors _SI70xx_, especially `SI7021` w
 #### Arduino platform
 * **Arduino.h**: Main include file for the Arduino SDK version greater or equal to 100.
 * **inttypes.h**: Integer type conversions. This header file includes the exact-width integer definitions and extends them with additional facilities provided by the implementation.
-* **TwoWire**: I2C system library loaded from the file *Wire.h*.
+* **TwoWire**: I2C system library loaded from the file `Wire.h`.
 
 #### Custom Libraries
 * **gbjTwoWire**: I2C custom library loaded from the file `gbj_twowire.h`, which provides common bus functionality.
@@ -235,7 +235,7 @@ The method is overloaded and measures either relative humidity alongside with te
   * *Default value*: none
 
 #### Returns
-* Relative humidity truncated to range 0 - 100 °C or erroneous value returned by [getErrorRHT()](#getErrorRHT).
+Relative humidity truncated to range 0 - 100 °C or erroneous value returned by [getErrorRHT()](#getErrorRHT).
 
 #### Example
 ``` cpp
@@ -272,19 +272,6 @@ None
 
 #### Returns
 Temperature in centigrade or erroneous value returned by [getErrorRHT()](#getErrorRHT).
-
-#### Example
-``` cpp
-gbj_si70 sensor = gbj_si70();
-float tempValue;
-setup()
-{
-  if (sensor.isSuccess(sensor.begin()))
-  {
-    tempValue = sensor.measureTemperature();
-  }
-}
-```
 
 #### See also
 [measureHumidity()](#measureHumidity)

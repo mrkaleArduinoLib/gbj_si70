@@ -514,91 +514,81 @@ private:
     };
   } _resolusion;
   inline bool getUseValuesTyp() { return _status.useValuesTyp; }
-  inline uint8_t getConversionTimeTempMax()
-  {
-    uint8_t resIdx = resolution();
-    return _resolusion
-      .tempConvTimeMax[isSuccess(reloadUserRegister()) ? resIdx : 0];
-  }
+
   inline uint8_t getConversionTimeTempTyp()
   {
-    uint8_t resIdx = resolution();
     return _resolusion
-      .tempConvTimeTyp[isSuccess(reloadUserRegister()) ? resIdx : 0];
+      .tempConvTimeTyp[isSuccess(reloadUserRegister()) ? resolution() : 0];
+  }
+  inline uint8_t getConversionTimeTempMax()
+  {
+    return _resolusion
+      .tempConvTimeMax[isSuccess(reloadUserRegister()) ? resolution() : 0];
+  }
+  inline uint8_t getConversionTimeTemp()
+  {
+    return getUseValuesTyp() ? getConversionTimeTempTyp()
+                             : getConversionTimeTempMax();
+  }
+
+  inline uint8_t getConversionTimeRhumTyp()
+  {
+    return _resolusion
+      .rhumConvTimeTyp[isSuccess(reloadUserRegister()) ? resolution() : 0];
   }
   inline uint8_t getConversionTimeRhumMax()
   {
-    uint8_t resIdx = resolution();
     return _resolusion
-      .rhumConvTimeMax[isSuccess(reloadUserRegister()) ? resIdx : 0];
+      .rhumConvTimeMax[isSuccess(reloadUserRegister()) ? resolution() : 0];
   }
-  inline uint8_t getConversionTimeRhumTyp()
+  inline uint8_t getConversionTimeRhum()
   {
-    uint8_t resIdx = resolution();
-    return _resolusion
-      .rhumConvTimeTyp[isSuccess(reloadUserRegister()) ? resIdx : 0];
+    return getUseValuesTyp() ? getConversionTimeRhumTyp()
+                             : getConversionTimeRhumMax();
   }
 
   /*
-    Calculate CRC8 checksum for 32-bit integer
+    Validate byte array by CRC
 
     DESCRIPTION:
-    The method calculates CRC8 checksum of long integer by 9-bit polynomial
-    x^8+x^5+x^4+x^0 (0x131) with initialization 0x00 according to the datasheet.
+    The method checks whether provided CRC8 checksum is valid for input byte
+    array.
+    - The method utilizes CRC8 checksum with polynom x^8+x^5+x^4+1.
+    - For 2 LSB items (bytes) of provided array the CRC is calculated and
+    compared to the 3rd item.
 
     PARAMETERS:
-    data  - Number for which the CRC to be calculated
-      - Data type: non-negative integer
+    byteArray - Pointer to an array of bytes
+      - Data type: pointer
       - Default value: none
-      - Limited range: 0 ~ 2^32 - 1
+      - Limited range: none
 
-    RETURN: CRC8 checksum
-  */
-  inline uint8_t crc8(uint32_t data)
-  {
-    // Initialization by datasheet
-    uint8_t crc = 0x00;
-    for (uint8_t i = 4; i > 0; i--)
-    {
-      // Separate byte from MSB to LSB
-      crc ^= (data >> (8 * (i - 1))) & 0xFF;
-      // Bitwise division by polynomial
-      for (uint8_t j = 8; j > 0; j--)
-      {
-        if (crc & 0x80)
-          // Polynomial x^8+x^5+x^4+x^0 by datasheet
-          crc = (crc << 1) ^ 0x131;
-        else
-          crc = (crc << 1);
-      }
-    }
-    return crc;
-  }
-
-  /*
-    Validate 32-bit integer by provided CRC8 checksum with polynom
-    x^8+x^5+x^4+1.
-
-    DESCRIPTION:
-    The method checks whether provided CRC8 checksum is valid for input long
-    integer.
-
-    PARAMETERS:
-    data - Number for which the CRC to be calculated
+    dataBytes - Number of bytes to be checked
       - Data type: non-negative integer
-      - Default value: none
-      - Limited range: 0 ~ 2^32 - 1
-
-    crc - Expected CRC8 checksum.
-      - Data type: non-negative integer
-      - Default value: none
+      - Default value: 2
       - Limited range: 0 ~ 255
 
-    RETURN: Flag about correct checksum.
+    RETURN: Flag about correct checksum
   */
-  inline bool checkCrc8(uint32_t data, uint8_t crc)
+  inline bool checkCrc8(uint8_t *byteArray, uint8_t dataBytes = 2)
   {
-    return crc == crc8(data);
+    uint8_t crc = 0;
+    for (uint8_t i = 0; i < dataBytes; i++)
+    {
+      crc ^= byteArray[i];
+      for (int8_t b = 7; b >= 0; b--)
+      {
+        if (crc & 0x80)
+        {
+          crc = (crc << 1) ^ 0x31;
+        }
+        else
+        {
+          crc = (crc << 1);
+        }
+      }
+    }
+    return crc == byteArray[dataBytes];
   }
 
   /*

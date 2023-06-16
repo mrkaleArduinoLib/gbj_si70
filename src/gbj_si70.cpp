@@ -84,15 +84,15 @@ gbj_si70::ResultCodes gbj_si70::readSerialNumber()
     {
       return setLastResult(ResultCodes::ERROR_SN);
     }
-    _status.serialSNA = 0x00000000;
+    status_.serialSNA = 0x00000000;
     /* From SNA_3 to SNA_0.
       After each SNA byte the CRC byte follows, i.e., there are 4 pairs of
       SNA-CRC bytes.
     */
     for (uint8_t i = 0; i < (sizeof(data) / sizeof(data[0]) / 2); i++)
     {
-      _status.serialSNA <<= 8;
-      _status.serialSNA |= data[2 * i];
+      status_.serialSNA <<= 8;
+      status_.serialSNA |= data[2 * i];
       if (!checkCrc8(&data[2 * i], 1))
       {
         return setLastResult(ResultCodes::ERROR_SN);
@@ -108,17 +108,17 @@ gbj_si70::ResultCodes gbj_si70::readSerialNumber()
     {
       return setLastResult(ResultCodes::ERROR_SN);
     }
-    _status.serialSNB = 0x00000000;
+    status_.serialSNB = 0x00000000;
     /* From SNB_3 to SNB_0.
       After each pair of SNA bytes the CRC byte follows, i.e., there are 2
       tripples of SNB-SNB-CRC bytes.
     */
     for (uint8_t i = 0; i < (sizeof(data) / sizeof(data[0]) / 3); i++)
     {
-      _status.serialSNB <<= 8;
-      _status.serialSNB |= data[3 * i];
-      _status.serialSNB <<= 8;
-      _status.serialSNB |= data[3 * i + 1];
+      status_.serialSNB <<= 8;
+      status_.serialSNB |= data[3 * i];
+      status_.serialSNB <<= 8;
+      status_.serialSNB |= data[3 * i + 1];
       if (!checkCrc8(&data[3 * i]))
       {
         return setLastResult(ResultCodes::ERROR_SN);
